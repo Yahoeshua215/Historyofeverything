@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { IdentifyError, type IdentifyResult } from "@/lib/types";
 
-// Mock only the live Claude call; keep the real media-type validators.
+// Mock only the live model call; keep the real media-type validators.
 const { identifyImage } = vi.hoisted(() => ({ identifyImage: vi.fn() }));
-vi.mock("@/lib/claude", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/claude")>();
+vi.mock("@/lib/openai", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/openai")>();
   return { ...actual, identifyImage };
 });
 

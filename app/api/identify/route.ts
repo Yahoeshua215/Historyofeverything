@@ -1,7 +1,7 @@
 import {
   identifyImage,
   isAllowedMediaType,
-} from "@/lib/claude";
+} from "@/lib/openai";
 import { IdentifyError, type IdentifyErrorKind } from "@/lib/types";
 
 // Runs server-side on Node.js (Fluid Compute) so the Anthropic key never reaches

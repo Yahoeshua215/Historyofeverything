@@ -51,6 +51,19 @@ describe("parseIdentifyResult", () => {
     ).toThrow();
   });
 
+  it("ignores blank-body cards when counting toward the minimum", () => {
+    const withBlanks = {
+      ...validRaw,
+      storyCards: [
+        validRaw.storyCards[0],
+        validRaw.storyCards[1],
+        { heading: "Blank", body: "   " },
+      ],
+    };
+    // Only 2 usable cards → below the minimum → throws.
+    expect(() => parseIdentifyResult(withBlanks)).toThrow();
+  });
+
   it("throws when required fields are missing or wrong type", () => {
     expect(() => parseIdentifyResult({ ...validRaw, name: "" })).toThrow();
     expect(() => parseIdentifyResult({ ...validRaw, instantAnswer: 5 })).toThrow();

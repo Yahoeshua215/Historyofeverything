@@ -115,10 +115,15 @@ export function parseIdentifyResult(value: unknown): IdentifyResult {
   if (!Array.isArray(raw.storyCards) || !raw.storyCards.every(isStoryCard)) {
     throw new IdentifyError("upstream", "Model response has malformed story cards.");
   }
-  if (raw.storyCards.length < MIN_STORY_CARDS) {
+  // Only cards with real content count toward the minimum — otherwise an all-blank
+  // set passes the length check and renders as an empty story (defeats MIN_STORY_CARDS).
+  const usableCards = (raw.storyCards as StoryCard[])
+    .filter((card) => card.heading.trim() !== "" && card.body.trim() !== "")
+    .map((card) => ({ heading: card.heading.trim(), body: card.body.trim() }));
+  if (usableCards.length < MIN_STORY_CARDS) {
     throw new IdentifyError(
       "upstream",
-      `Model returned ${raw.storyCards.length} story cards; need at least ${MIN_STORY_CARDS}.`,
+      `Model returned ${usableCards.length} usable story cards; need at least ${MIN_STORY_CARDS}.`,
     );
   }
 
@@ -126,6 +131,6 @@ export function parseIdentifyResult(value: unknown): IdentifyResult {
     name: raw.name.trim(),
     confidence: Math.min(1, Math.max(0, raw.confidence)),
     instantAnswer: raw.instantAnswer.trim(),
-    storyCards: raw.storyCards.slice(0, MAX_STORY_CARDS),
+    storyCards: usableCards.slice(0, MAX_STORY_CARDS),
   };
 }

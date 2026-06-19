@@ -9,9 +9,10 @@ import { IdentifyError, type IdentifyErrorKind } from "@/lib/types";
 // function timeout is ample.
 export const runtime = "nodejs";
 
-// Base64 is ~1.33× the raw byte size. Client downscaling (U3) keeps real uploads
-// well under this; the cap is a guardrail against oversized/abusive bodies.
-const MAX_IMAGE_BASE64_LENGTH = 8_000_000; // ~6MB decoded
+// Base64 is ~1.33× the raw byte size. Anthropic rejects images over ~5MB, so cap
+// well under that at the route boundary; client downscaling (U3) keeps real uploads
+// far smaller still. The cap is a guardrail against oversized/abusive bodies.
+const MAX_IMAGE_BASE64_LENGTH = 5_000_000; // ~3.75MB decoded — safely under the API limit
 
 const STATUS_BY_KIND: Record<IdentifyErrorKind, number> = {
   bad_request: 400,

@@ -5,8 +5,6 @@ import { downscaleToJpeg, type CapturedImage } from "@/lib/image";
 
 interface CaptureProps {
   onCapture: (image: CapturedImage) => void;
-  /** When true (e.g. mid-request), disable the controls. */
-  busy?: boolean;
   /**
    * Image processor seam — defaults to the real canvas downscale. Tests inject a
    * fake so they don't depend on a real canvas/decoder.
@@ -57,7 +55,6 @@ const errorStyle: CSSProperties = {
  */
 export default function Capture({
   onCapture,
-  busy = false,
   processImage = downscaleToJpeg,
 }: CaptureProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -94,8 +91,6 @@ export default function Capture({
     }
   }
 
-  const disabled = busy || processing;
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <input
@@ -116,7 +111,7 @@ export default function Capture({
         type="button"
         style={preview ? secondaryButton : button}
         onClick={openPicker}
-        disabled={disabled}
+        disabled={processing}
       >
         {processing ? "Reading…" : preview ? "Retake" : "📷 Scan something"}
       </button>

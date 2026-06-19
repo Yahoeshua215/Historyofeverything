@@ -79,13 +79,16 @@ export async function identifyImage(
       ],
     });
   } catch (err) {
-    if (err instanceof IdentifyError) throw err;
     const message = err instanceof Error ? err.message : "Unknown upstream error.";
     throw new IdentifyError("upstream", message);
   }
 
   if (response.stop_reason === "refusal") {
     throw new IdentifyError("refused", "Claude declined to analyse this image.");
+  }
+  if (response.stop_reason === "max_tokens") {
+    // The story JSON was truncated — surface it clearly rather than as a parse error.
+    throw new IdentifyError("upstream", "The response was cut off. Please try again.");
   }
 
   const text = response.content
@@ -101,7 +104,7 @@ export async function identifyImage(
 
   const result = parseIdentifyResult(json);
 
-  if (result.confidence === 0 || result.name.toLowerCase() === "unknown") {
+  if (result.confidence === 0 || result.name.toLowerCase().startsWith("unknown")) {
     throw new IdentifyError(
       "unidentifiable",
       "Couldn't confidently identify anything in that image.",

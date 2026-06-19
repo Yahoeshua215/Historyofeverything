@@ -62,6 +62,11 @@ export async function downscaleToJpeg(file: File): Promise<CapturedImage> {
   ctx.drawImage(img, 0, 0, width, height);
 
   const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
-  const base64 = dataUrl.split(",")[1] ?? "";
+  const base64 = dataUrl.split(",")[1];
+  if (!base64) {
+    // Tainted/zero-size canvas or a browser quirk — treat as a decode failure so the
+    // caller shows a retryable "couldn't read that image" rather than posting empty data.
+    throw new Error("Canvas produced no image data.");
+  }
   return { base64, mediaType: "image/jpeg", dataUrl };
 }

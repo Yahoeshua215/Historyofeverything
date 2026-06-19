@@ -6,9 +6,9 @@ import {
   parseIdentifyResult,
 } from "./types";
 
-// Single config point for the model. Default to gpt-4o (vision + Structured Outputs);
-// override via env to trade quality for per-scan cost (e.g. gpt-4o-mini).
-export const MODEL = process.env.HISTORY_LENS_MODEL ?? "gpt-4o";
+// Single config point for the model. Default to gpt-4o-mini (vision + Structured
+// Outputs, broadly accessible); override via env for higher quality (e.g. gpt-4o).
+export const MODEL = process.env.HISTORY_LENS_MODEL ?? "gpt-4o-mini";
 
 export const ALLOWED_MEDIA_TYPES = [
   "image/jpeg",

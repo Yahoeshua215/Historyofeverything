@@ -1,9 +1,10 @@
 import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
 
 export default defineConfig({
-  plugins: [react()],
+  esbuild: {
+    jsx: "automatic", // use react/jsx-runtime — no need to import React in every file
+  },
   test: {
     environment: "happy-dom",
     globals: true,

@@ -47,7 +47,19 @@ describe("POST /api/identify", () => {
     expect(json.storyCards).toHaveLength(3);
     expect(json.instantAnswer.length).toBeGreaterThan(0);
 
-    expect(identifyImage).toHaveBeenCalledWith("ZmFrZS1iYXNlNjQ=", "image/jpeg");
+    expect(identifyImage).toHaveBeenCalledWith("ZmFrZS1iYXNlNjQ=", "image/jpeg", "adult");
+  });
+
+  it("passes kid mode through to the model", async () => {
+    identifyImage.mockResolvedValue(sampleResult);
+    await POST(postRequest({ ...validBody, mode: "kid" }));
+    expect(identifyImage).toHaveBeenCalledWith("ZmFrZS1iYXNlNjQ=", "image/jpeg", "kid");
+  });
+
+  it("returns 400 for an invalid mode, with no model call", async () => {
+    const res = await POST(postRequest({ ...validBody, mode: "grownup" }));
+    expect(res.status).toBe(400);
+    expect(identifyImage).not.toHaveBeenCalled();
   });
 
   it("returns 400 and makes no Claude call when the image is missing", async () => {

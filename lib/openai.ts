@@ -3,11 +3,18 @@ import {
   IDENTIFY_RESULT_SCHEMA,
   IdentifyError,
   type IdentifyResult,
+  type Mode,
   parseIdentifyResult,
   WHY_STEP_SCHEMA,
   type WhyStep,
   parseWhyStep,
 } from "./types";
+
+// Tone/reading-level instruction shared by the identify and why prompts (Kid Mode).
+const STYLE: Record<Mode, string> = {
+  adult: "Audience: a general adult reader. Use clear, informative language.",
+  kid: "Audience: a curious child around 6–9 years old. Use short sentences, simple everyday words, a warm and fun tone, and concrete examples a kid would recognise. Avoid jargon. Stay accurate.",
+};
 
 // Single config point for the model. Default to gpt-4o-mini (vision + Structured
 // Outputs, broadly accessible); override via env for higher quality (e.g. gpt-4o).
@@ -57,6 +64,7 @@ function getClient(): OpenAI {
 export async function identifyImage(
   base64: string,
   mediaType: AllowedMediaType,
+  mode: Mode = "adult",
 ): Promise<IdentifyResult> {
   let completion;
   try {
@@ -67,7 +75,7 @@ export async function identifyImage(
         {
           role: "user",
           content: [
-            { type: "text", text: PROMPT },
+            { type: "text", text: `${PROMPT}\n\n${STYLE[mode]}` },
             {
               type: "image_url",
               image_url: { url: `data:${mediaType};base64,${base64}` },
@@ -145,6 +153,7 @@ Rules:
 export async function deeperWhy(
   topic: string,
   chain: WhyStep[],
+  mode: Mode = "adult",
 ): Promise<WhyStep> {
   const chainText =
     chain.length === 0
@@ -157,7 +166,7 @@ export async function deeperWhy(
       model: MODEL,
       max_completion_tokens: 1024,
       messages: [
-        { role: "system", content: WHY_SYSTEM },
+        { role: "system", content: `${WHY_SYSTEM}\n\n${STYLE[mode]}` },
         {
           role: "user",
           content: `Topic: ${topic}\n\nChain so far:\n${chainText}\n\nGive the next deeper why-step.`,

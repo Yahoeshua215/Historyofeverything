@@ -38,6 +38,7 @@ function jsonResponse(body: unknown, ok = true, status = 200): Response {
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
+  window.localStorage.clear();
 });
 
 afterEach(() => {
@@ -100,5 +101,36 @@ describe("Home flow", () => {
 
     await waitFor(() => expect(screen.getByText("scan-stub")).toBeTruthy());
     expect(screen.queryByText("Stop sign")).toBeNull();
+  });
+
+  it("sends the selected mode to /api/identify (Kid Mode)", async () => {
+    const fetchMock = fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValue(jsonResponse(result));
+
+    render(<Home />);
+    fireEvent.click(screen.getByRole("button", { name: "Kid" }));
+    fireEvent.click(screen.getByText("scan-stub"));
+
+    await screen.findByText("Stop sign");
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.mode).toBe("kid");
+  });
+
+  it("saves a scan to history and can re-open it", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(result));
+
+    render(<Home />);
+    fireEvent.click(screen.getByText("scan-stub"));
+    await screen.findByText("Stop sign");
+
+    // History button shows the count; reset away from the result, then open it.
+    expect(await screen.findByRole("button", { name: /history \(1\)/i })).toBeTruthy();
+    fireEvent.click(screen.getByText("← Scan again"));
+    fireEvent.click(await screen.findByRole("button", { name: /history \(1\)/i }));
+
+    // The saved record is listed; selecting it re-opens the story.
+    expect(await screen.findByText("Stop sign")).toBeTruthy();
+    fireEvent.click(screen.getByText("Stop sign"));
+    expect(await screen.findByText("← Scan again")).toBeTruthy();
   });
 });

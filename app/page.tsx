@@ -1,13 +1,23 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Capture from "@/components/Capture";
 import StoryResult from "@/components/StoryResult";
 import WhyEngine from "@/components/WhyEngine";
+import ModeToggle from "@/components/ModeToggle";
+import HistoryView from "@/components/HistoryView";
 import type { CapturedImage } from "@/lib/image";
-import type { IdentifyErrorKind, IdentifyResult } from "@/lib/types";
+import {
+  clearHistory,
+  getHistory,
+  saveScan,
+  type ScanRecord,
+} from "@/lib/history";
+import { getMode, setMode as persistMode } from "@/lib/prefs";
+import type { IdentifyErrorKind, IdentifyResult, Mode } from "@/lib/types";
 
 type Status = "idle" | "loading" | "result" | "error";
+type View = "scan" | "history";
 
 // Map the route's typed error kinds (plus a client-side network failure) to distinct,
 // friendly, retry-able messages (R5).
@@ -33,6 +43,23 @@ const header: CSSProperties = { display: "flex", flexDirection: "column", gap: 6
 const title: CSSProperties = { margin: 0, fontSize: "1.5rem", letterSpacing: "-0.01em" };
 const tagline: CSSProperties = { margin: 0, color: "var(--text-muted)", fontSize: "0.95rem" };
 
+const controls: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+};
+
+const historyButton: CSSProperties = {
+  background: "var(--surface-2)",
+  color: "var(--text)",
+  border: "1px solid var(--border)",
+  borderRadius: 999,
+  padding: "6px 14px",
+  fontSize: "0.85rem",
+  fontWeight: 600,
+};
+
 const statusBlock: CSSProperties = {
   display: "flex",
   flexDirection: "column",
@@ -57,8 +84,22 @@ const errorText: CSSProperties = { margin: 0, color: "var(--danger)", textAlign:
 
 export default function Home() {
   const [status, setStatus] = useState<Status>("idle");
+  const [view, setView] = useState<View>("scan");
   const [result, setResult] = useState<IdentifyResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>("adult");
+  const [history, setHistory] = useState<ScanRecord[]>([]);
+
+  // Hydrate persisted state after mount (avoids SSR/localStorage mismatch).
+  useEffect(() => {
+    setMode(getMode());
+    setHistory(getHistory());
+  }, []);
+
+  function changeMode(next: Mode) {
+    setMode(next);
+    persistMode(next);
+  }
 
   function reset() {
     setStatus("idle");
@@ -71,6 +112,17 @@ export default function Home() {
     setStatus("error");
   }
 
+  function openRecord(record: ScanRecord) {
+    setResult(record);
+    setStatus("result");
+    setView("scan");
+  }
+
+  function handleClearHistory() {
+    clearHistory();
+    setHistory([]);
+  }
+
   async function identify(image: CapturedImage) {
     setStatus("loading");
     setErrorMessage(null);
@@ -78,7 +130,7 @@ export default function Home() {
       const res = await fetch("/api/identify", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ image: image.base64, mediaType: image.mediaType }),
+        body: JSON.stringify({ image: image.base64, mediaType: image.mediaType, mode }),
       });
 
       if (!res.ok) {
@@ -90,11 +142,26 @@ export default function Home() {
       }
 
       const data = (await res.json()) as IdentifyResult;
+      saveScan(data, mode);
+      setHistory(getHistory());
       setResult(data);
       setStatus("result");
     } catch {
       fail("network");
     }
+  }
+
+  if (view === "history") {
+    return (
+      <main style={main}>
+        <HistoryView
+          records={history}
+          onSelect={openRecord}
+          onClear={handleClearHistory}
+          onBack={() => setView("scan")}
+        />
+      </main>
+    );
   }
 
   return (
@@ -103,6 +170,13 @@ export default function Home() {
         <h1 style={title}>History Lens</h1>
         <p style={tagline}>Point your camera at anything. Understand why it exists.</p>
       </header>
+
+      <div style={controls}>
+        <ModeToggle mode={mode} onChange={changeMode} />
+        <button type="button" style={historyButton} onClick={() => setView("history")}>
+          🕘 History{history.length > 0 ? ` (${history.length})` : ""}
+        </button>
+      </div>
 
       {status === "idle" && <Capture onCapture={identify} />}
 
@@ -116,7 +190,7 @@ export default function Home() {
       {status === "result" && result && (
         <>
           <StoryResult result={result} />
-          <WhyEngine topic={result.name} />
+          <WhyEngine topic={result.name} mode={mode} />
           <button type="button" style={resetButton} onClick={reset}>
             ← Scan again
           </button>

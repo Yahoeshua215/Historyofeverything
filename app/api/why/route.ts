@@ -1,5 +1,10 @@
 import { deeperWhy } from "@/lib/openai";
-import { IdentifyError, type IdentifyErrorKind, type WhyStep } from "@/lib/types";
+import {
+  IdentifyError,
+  type IdentifyErrorKind,
+  isMode,
+  type WhyStep,
+} from "@/lib/types";
 
 // Server-side (Node.js) so the OpenAI key never reaches the client.
 export const runtime = "nodejs";
@@ -35,7 +40,11 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse("bad_request", "Request body must be a JSON object.");
   }
 
-  const { topic, chain } = body as { topic?: unknown; chain?: unknown };
+  const { topic, chain, mode } = body as {
+    topic?: unknown;
+    chain?: unknown;
+    mode?: unknown;
+  };
 
   if (typeof topic !== "string" || topic.trim() === "") {
     return errorResponse("bad_request", "Missing 'topic'.");
@@ -48,9 +57,12 @@ export async function POST(request: Request): Promise<Response> {
   if (chainValue.length > MAX_CHAIN_LENGTH) {
     return errorResponse("bad_request", "This curiosity chain has gone deep enough.");
   }
+  if (mode !== undefined && !isMode(mode)) {
+    return errorResponse("bad_request", "'mode' must be 'adult' or 'kid'.");
+  }
 
   try {
-    const step = await deeperWhy(topic.trim(), chainValue);
+    const step = await deeperWhy(topic.trim(), chainValue, mode ?? "adult");
     return Response.json(step, { status: 200 });
   } catch (err) {
     if (err instanceof IdentifyError) {

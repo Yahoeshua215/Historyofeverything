@@ -3,6 +3,13 @@
 // is the equivalent JSON Schema sent to Claude so the model returns the same shape.
 // Defined once here, imported on both sides.
 
+/** Reading-level / tone for generated content. */
+export type Mode = "adult" | "kid";
+
+export function isMode(value: unknown): value is Mode {
+  return value === "adult" || value === "kid";
+}
+
 export interface StoryCard {
   /** Short label, e.g. "What is it?" / "Why does it exist?" */
   heading: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import type { IdentifyErrorKind, WhyStep } from "@/lib/types";
+import type { IdentifyErrorKind, Mode, WhyStep } from "@/lib/types";
 
 const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
   bad_request: "Couldn't go deeper on that. Try again.",
@@ -60,7 +60,13 @@ const errorStyle: CSSProperties = { margin: 0, color: "var(--danger)", fontSize:
  * the user keep asking "Why?" — each tap posts the accumulated chain to /api/why
  * and appends the next causal layer, building a recursive curiosity trail.
  */
-export default function WhyEngine({ topic }: { topic: string }) {
+export default function WhyEngine({
+  topic,
+  mode = "adult",
+}: {
+  topic: string;
+  mode?: Mode;
+}) {
   const [chain, setChain] = useState<WhyStep[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -72,7 +78,7 @@ export default function WhyEngine({ topic }: { topic: string }) {
       const res = await fetch("/api/why", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ topic, chain }),
+        body: JSON.stringify({ topic, chain, mode }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as

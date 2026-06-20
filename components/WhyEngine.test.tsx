@@ -47,7 +47,7 @@ describe("WhyEngine", () => {
     await screen.findByText("Why does it exist?");
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body).toEqual({ topic: "Stop sign", chain: [] });
+    expect(body).toEqual({ topic: "Stop sign", chain: [], mode: "adult" });
   });
 
   it("shows a friendly error and no new step on failure", async () => {

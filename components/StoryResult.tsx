@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { IdentifyResult } from "@/lib/types";
+import NarrateButton from "./NarrateButton";
 
 // Below this confidence we surface an honest "might not be exact" hint (vision: be
 // honest about uncertainty rather than hiding it).
@@ -15,6 +16,7 @@ const layer1: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 8,
+  animation: "hl-pop 0.35s ease both",
 };
 
 const nameStyle: CSSProperties = {
@@ -51,6 +53,7 @@ const cardStyle: CSSProperties = {
   border: "1px solid var(--border)",
   borderRadius: "var(--radius)",
   padding: 16,
+  animation: "hl-fade-up 0.4s ease both",
 };
 
 const cardHeading: CSSProperties = {
@@ -76,6 +79,9 @@ export default function StoryResult({ result }: { result: IdentifyResult }) {
   const cards = storyCards.filter((card) => card.body.trim() !== "");
   const lowConfidence = confidence < LOW_CONFIDENCE_THRESHOLD;
 
+  // Plain-text version of the story for read-aloud narration.
+  const narration = [name, instantAnswer, ...cards.map((c) => `${c.heading} ${c.body}`)].join(". ");
+
   return (
     <section style={wrap} aria-label="Identification result">
       <div style={layer1}>
@@ -86,11 +92,15 @@ export default function StoryResult({ result }: { result: IdentifyResult }) {
             Not fully sure — this might not be exact
           </span>
         )}
+        <NarrateButton text={narration} />
       </div>
 
       <div style={cardsStyle}>
         {cards.map((card, index) => (
-          <article key={`${card.heading}-${index}`} style={cardStyle}>
+          <article
+            key={`${card.heading}-${index}`}
+            style={{ ...cardStyle, animationDelay: `${index * 60}ms` }}
+          >
             <h2 style={cardHeading}>{card.heading}</h2>
             <p style={cardBody}>{card.body}</p>
           </article>

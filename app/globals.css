@@ -41,11 +41,11 @@ button:disabled {
   opacity: 0.5;
 }
 
-/* Entrance animations (kid-mode delight; subtle for everyone). */
+/* Entrance animations (kid-mode delight). */
 @keyframes hl-pop {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.88);
   }
   to {
     opacity: 1;
@@ -56,7 +56,7 @@ button:disabled {
 @keyframes hl-fade-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -64,13 +64,32 @@ button:disabled {
   }
 }
 
-/* Respect users who prefer reduced motion. */
+/* Opacity-only fallback used under reduced motion (no movement). */
+@keyframes hl-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hl-pop {
+  animation: hl-pop 0.5s ease both;
+}
+
+.hl-fade-up {
+  animation: hl-fade-up 0.5s ease both;
+}
+
+/*
+ * Respect reduced motion: drop the movement but keep a gentle fade so the UI
+ * still gives feedback. A short opacity fade carries no vestibular-trigger risk.
+ */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+  .hl-pop,
+  .hl-fade-up {
+    animation-name: hl-fade;
+    animation-duration: 0.3s;
   }
 }

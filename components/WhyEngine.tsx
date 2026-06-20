@@ -33,7 +33,6 @@ const stepStyle: CSSProperties = {
   gap: 4,
   borderLeft: "2px solid var(--accent)",
   paddingLeft: 12,
-  animation: "hl-fade-up 0.35s ease both",
 };
 
 const qStyle: CSSProperties = { margin: 0, fontWeight: 600, color: "var(--text)" };
@@ -102,7 +101,7 @@ export default function WhyEngine({
       <h2 style={heading}>Keep asking why</h2>
 
       {chain.map((step, index) => (
-        <div key={index} style={stepStyle}>
+        <div key={index} className="hl-fade-up" style={stepStyle}>
           <p style={qStyle}>{step.question}</p>
           <p style={aStyle}>{step.answer}</p>
         </div>

@@ -16,7 +16,6 @@ const layer1: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 8,
-  animation: "hl-pop 0.35s ease both",
 };
 
 const nameStyle: CSSProperties = {
@@ -53,7 +52,6 @@ const cardStyle: CSSProperties = {
   border: "1px solid var(--border)",
   borderRadius: "var(--radius)",
   padding: 16,
-  animation: "hl-fade-up 0.4s ease both",
 };
 
 const cardHeading: CSSProperties = {
@@ -84,7 +82,7 @@ export default function StoryResult({ result }: { result: IdentifyResult }) {
 
   return (
     <section style={wrap} aria-label="Identification result">
-      <div style={layer1}>
+      <div style={layer1} className="hl-pop">
         <h1 style={nameStyle}>{name}</h1>
         <p style={instantStyle}>{instantAnswer}</p>
         {lowConfidence && (
@@ -99,7 +97,8 @@ export default function StoryResult({ result }: { result: IdentifyResult }) {
         {cards.map((card, index) => (
           <article
             key={`${card.heading}-${index}`}
-            style={{ ...cardStyle, animationDelay: `${index * 60}ms` }}
+            className="hl-fade-up"
+            style={{ ...cardStyle, animationDelay: `${index * 80}ms` }}
           >
             <h2 style={cardHeading}>{card.heading}</h2>
             <p style={cardBody}>{card.body}</p>

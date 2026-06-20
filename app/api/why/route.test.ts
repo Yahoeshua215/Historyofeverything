@@ -33,20 +33,32 @@ describe("POST /api/why", () => {
     const res = await POST(postRequest({ topic: "Stop sign", chain: [] }));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual(step);
-    expect(deeperWhy).toHaveBeenCalledWith("Stop sign", []);
+    expect(deeperWhy).toHaveBeenCalledWith("Stop sign", [], "adult");
   });
 
   it("passes the prior chain through to the model", async () => {
     deeperWhy.mockResolvedValue(step);
     const chain = [{ question: "Why?", answer: "Because." }];
     await POST(postRequest({ topic: "Stop sign", chain }));
-    expect(deeperWhy).toHaveBeenCalledWith("Stop sign", chain);
+    expect(deeperWhy).toHaveBeenCalledWith("Stop sign", chain, "adult");
   });
 
   it("defaults a missing chain to an empty array", async () => {
     deeperWhy.mockResolvedValue(step);
     await POST(postRequest({ topic: "Stop sign" }));
-    expect(deeperWhy).toHaveBeenCalledWith("Stop sign", []);
+    expect(deeperWhy).toHaveBeenCalledWith("Stop sign", [], "adult");
+  });
+
+  it("passes kid mode through to the model", async () => {
+    deeperWhy.mockResolvedValue(step);
+    await POST(postRequest({ topic: "Stop sign", mode: "kid" }));
+    expect(deeperWhy).toHaveBeenCalledWith("Stop sign", [], "kid");
+  });
+
+  it("returns 400 for an invalid mode", async () => {
+    const res = await POST(postRequest({ topic: "Stop sign", mode: "teen" }));
+    expect(res.status).toBe(400);
+    expect(deeperWhy).not.toHaveBeenCalled();
   });
 
   it("returns 400 with no model call for a missing topic", async () => {

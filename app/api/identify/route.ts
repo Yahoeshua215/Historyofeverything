@@ -2,7 +2,7 @@ import {
   identifyImage,
   isAllowedMediaType,
 } from "@/lib/openai";
-import { IdentifyError, type IdentifyErrorKind } from "@/lib/types";
+import { IdentifyError, type IdentifyErrorKind, isMode } from "@/lib/types";
 
 // Runs server-side on Node.js (Fluid Compute) so the Anthropic key never reaches
 // the client (R2). The Claude call can take a few seconds; the default 300s
@@ -37,9 +37,13 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse("bad_request", "Request body must be a JSON object.");
   }
 
-  const { image, mediaType } = body as { image?: unknown; mediaType?: unknown };
+  const { image, mediaType, mode } = body as {
+    image?: unknown;
+    mediaType?: unknown;
+    mode?: unknown;
+  };
 
-  // 2. Validate the input — no Claude call until this passes.
+  // 2. Validate the input — no model call until this passes.
   if (typeof image !== "string" || image.length === 0) {
     return errorResponse("bad_request", "Missing base64 'image'.");
   }
@@ -52,10 +56,14 @@ export async function POST(request: Request): Promise<Response> {
       "Missing or unsupported 'mediaType' (use image/jpeg, png, gif, or webp).",
     );
   }
+  // `mode` is optional; default to adult, reject anything other than adult/kid.
+  if (mode !== undefined && !isMode(mode)) {
+    return errorResponse("bad_request", "'mode' must be 'adult' or 'kid'.");
+  }
 
-  // 3. Identify + build the story (single Claude call).
+  // 3. Identify + build the story (single model call).
   try {
-    const result = await identifyImage(image, mediaType);
+    const result = await identifyImage(image, mediaType, mode ?? "adult");
     return Response.json(result, { status: 200 });
   } catch (err) {
     if (err instanceof IdentifyError) {

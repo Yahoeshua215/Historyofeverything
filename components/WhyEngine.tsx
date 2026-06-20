@@ -33,6 +33,7 @@ const stepStyle: CSSProperties = {
   gap: 4,
   borderLeft: "2px solid var(--accent)",
   paddingLeft: 12,
+  animation: "hl-fade-up 0.35s ease both",
 };
 
 const qStyle: CSSProperties = { margin: 0, fontWeight: 600, color: "var(--text)" };

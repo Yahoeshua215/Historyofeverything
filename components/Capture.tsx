@@ -17,20 +17,24 @@ const button: CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   gap: 8,
-  background: "var(--accent)",
-  color: "#1a1206",
+  background: "var(--accent-gradient)",
+  color: "var(--accent-ink)",
   border: "none",
   borderRadius: 999,
-  padding: "14px 22px",
+  padding: "15px 24px",
   fontSize: "1.05rem",
   fontWeight: 600,
+  boxShadow: "var(--shadow-accent)",
 };
 
 const secondaryButton: CSSProperties = {
   ...button,
-  background: "var(--surface-2)",
+  background: "var(--glass)",
   color: "var(--text)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
 };
 
 const previewStyle: CSSProperties = {
@@ -38,7 +42,8 @@ const previewStyle: CSSProperties = {
   maxHeight: 280,
   objectFit: "cover",
   borderRadius: "var(--radius)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow)",
   display: "block",
 };
 
@@ -110,6 +115,7 @@ export default function Capture({
       <button
         type="button"
         style={preview ? secondaryButton : button}
+        className="hl-interactive"
         onClick={openPicker}
         disabled={processing}
       >

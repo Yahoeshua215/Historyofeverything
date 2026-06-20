@@ -38,18 +38,28 @@ const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
 };
 
 const main: CSSProperties = {
-  maxWidth: 640,
+  maxWidth: 660,
   margin: "0 auto",
-  padding: "32px 20px 64px",
+  padding: "40px 20px 72px",
   display: "flex",
   flexDirection: "column",
-  gap: 24,
+  gap: 26,
   minHeight: "100dvh",
 };
 
-const header: CSSProperties = { display: "flex", flexDirection: "column", gap: 6 };
-const title: CSSProperties = { margin: 0, fontSize: "1.5rem", letterSpacing: "-0.01em" };
-const tagline: CSSProperties = { margin: 0, color: "var(--text-muted)", fontSize: "0.95rem" };
+const header: CSSProperties = { display: "flex", flexDirection: "column", gap: 8 };
+const title: CSSProperties = {
+  margin: 0,
+  fontSize: "clamp(1.7rem, 7vw, 2.2rem)",
+  fontWeight: 700,
+  letterSpacing: "-0.03em",
+};
+const tagline: CSSProperties = {
+  margin: 0,
+  color: "var(--text-muted)",
+  fontSize: "1rem",
+  lineHeight: 1.45,
+};
 
 const controls: CSSProperties = {
   display: "flex",
@@ -59,11 +69,14 @@ const controls: CSSProperties = {
 };
 
 const historyButton: CSSProperties = {
-  background: "var(--surface-2)",
+  background: "var(--glass)",
   color: "var(--text)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
   borderRadius: 999,
-  padding: "6px 14px",
+  padding: "8px 16px",
   fontSize: "0.85rem",
   fontWeight: 600,
 };
@@ -73,17 +86,20 @@ const statusBlock: CSSProperties = {
   flexDirection: "column",
   alignItems: "center",
   gap: 12,
-  padding: "40px 0",
+  padding: "44px 0",
   color: "var(--text-muted)",
 };
 
 const resetButton: CSSProperties = {
   alignSelf: "flex-start",
-  background: "var(--surface-2)",
+  background: "var(--glass)",
   color: "var(--text)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
   borderRadius: 999,
-  padding: "12px 20px",
+  padding: "12px 22px",
   fontSize: "1rem",
   fontWeight: 600,
 };
@@ -212,13 +228,18 @@ export default function Home() {
   return (
     <main style={main}>
       <header style={header}>
-        <h1 style={title}>History Lens</h1>
+        <h1 style={title} className="hl-gradient-text">History Lens</h1>
         <p style={tagline}>Point your camera at anything. Understand why it exists.</p>
       </header>
 
       <div style={controls}>
         <ModeToggle mode={mode} onChange={changeMode} />
-        <button type="button" style={historyButton} onClick={() => setView("history")}>
+        <button
+          type="button"
+          style={historyButton}
+          className="hl-interactive"
+          onClick={() => setView("history")}
+        >
           🕘 History{history.length > 0 ? ` (${history.length})` : ""}
         </button>
       </div>
@@ -242,7 +263,12 @@ export default function Home() {
           <StoryResult result={result} />
           <RabbitHoleCards onSelect={onRabbitHole} />
           <WhyEngine topic={result.name} mode={mode} />
-          <button type="button" style={resetButton} onClick={reset}>
+          <button
+            type="button"
+            style={resetButton}
+            className="hl-interactive"
+            onClick={reset}
+          >
             ← Scan again
           </button>
         </>
@@ -252,7 +278,12 @@ export default function Home() {
         <div style={statusBlock} role="alert">
           <span style={{ fontSize: "2rem" }}>😕</span>
           <p style={errorText}>{errorMessage}</p>
-          <button type="button" style={resetButton} onClick={reset}>
+          <button
+            type="button"
+            style={resetButton}
+            className="hl-interactive"
+            onClick={reset}
+          >
             Try again
           </button>
         </div>

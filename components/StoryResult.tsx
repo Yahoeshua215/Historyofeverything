@@ -34,32 +34,37 @@ const instantStyle: CSSProperties = {
 
 const hintStyle: CSSProperties = {
   fontSize: "0.85rem",
-  color: "var(--accent)",
+  fontWeight: 600,
+  color: "var(--accent-strong)",
   background: "var(--accent-soft)",
   borderRadius: 999,
-  padding: "4px 12px",
+  padding: "5px 14px",
   alignSelf: "flex-start",
 };
 
 const cardsStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 12,
+  gap: 14,
 };
 
 const cardStyle: CSSProperties = {
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
+  background: "var(--glass)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
   borderRadius: "var(--radius)",
-  padding: 16,
+  padding: 20,
 };
 
 const cardHeading: CSSProperties = {
   margin: "0 0 6px",
-  fontSize: "0.78rem",
+  fontSize: "0.74rem",
+  fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.06em",
-  color: "var(--text-muted)",
+  letterSpacing: "0.08em",
+  color: "var(--accent-strong)",
 };
 
 const cardBody: CSSProperties = {

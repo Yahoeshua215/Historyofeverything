@@ -13,11 +13,14 @@ const topRow: CSSProperties = {
 };
 
 const pillButton: CSSProperties = {
-  background: "var(--surface-2)",
+  background: "var(--glass)",
   color: "var(--text)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
   borderRadius: 999,
-  padding: "8px 16px",
+  padding: "9px 18px",
   fontSize: "0.9rem",
   fontWeight: 600,
 };
@@ -25,20 +28,24 @@ const pillButton: CSSProperties = {
 const clearButton: CSSProperties = {
   ...pillButton,
   color: "var(--danger)",
-  borderColor: "var(--danger)",
-  background: "transparent",
+  borderColor: "rgba(224, 80, 106, 0.4)",
+  background: "var(--glass-2)",
 };
 
 const card: CSSProperties = {
   textAlign: "left",
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
+  background: "var(--glass)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
   borderRadius: "var(--radius)",
-  padding: 14,
+  padding: 16,
   display: "flex",
   flexDirection: "column",
-  gap: 4,
+  gap: 5,
   width: "100%",
+  color: "var(--text)",
 };
 
 const cardName: CSSProperties = { margin: 0, fontWeight: 600, fontSize: "1.05rem" };
@@ -79,12 +86,12 @@ export default function HistoryView({
   return (
     <section style={wrap} aria-label="Scan history">
       <div style={topRow}>
-        <button type="button" style={pillButton} onClick={onBack}>
+        <button type="button" style={pillButton} className="hl-interactive" onClick={onBack}>
           ← Back
         </button>
         <strong>History</strong>
         {records.length > 0 ? (
-          <button type="button" style={clearButton} onClick={onClear}>
+          <button type="button" style={clearButton} className="hl-interactive" onClick={onClear}>
             Clear
           </button>
         ) : (
@@ -100,6 +107,7 @@ export default function HistoryView({
             key={record.id}
             type="button"
             style={card}
+            className="hl-interactive"
             onClick={() => onSelect(record)}
           >
             <p style={cardName}>{record.name}</p>

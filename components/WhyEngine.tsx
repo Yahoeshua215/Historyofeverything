@@ -14,16 +14,17 @@ const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
 const wrap: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 12,
+  gap: 14,
   borderTop: "1px solid var(--border)",
-  paddingTop: 20,
+  paddingTop: 22,
 };
 
 const heading: CSSProperties = {
   margin: 0,
   fontSize: "0.78rem",
+  fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.06em",
+  letterSpacing: "0.08em",
   color: "var(--text-muted)",
 };
 
@@ -31,11 +32,11 @@ const stepStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 4,
-  borderLeft: "2px solid var(--accent)",
-  paddingLeft: 12,
+  borderLeft: "2.5px solid var(--accent)",
+  paddingLeft: 14,
 };
 
-const qStyle: CSSProperties = { margin: 0, fontWeight: 600, color: "var(--text)" };
+const qStyle: CSSProperties = { margin: 0, fontWeight: 700, color: "var(--text)" };
 const aStyle: CSSProperties = { margin: 0, color: "var(--text-muted)", lineHeight: 1.5 };
 
 const button: CSSProperties = {
@@ -44,10 +45,10 @@ const button: CSSProperties = {
   alignItems: "center",
   gap: 8,
   background: "var(--accent-soft)",
-  color: "var(--accent)",
-  border: "1px solid var(--accent)",
+  color: "var(--accent-strong)",
+  border: "1px solid rgba(99, 102, 241, 0.35)",
   borderRadius: 999,
-  padding: "10px 18px",
+  padding: "11px 20px",
   fontSize: "1rem",
   fontWeight: 600,
 };
@@ -107,7 +108,13 @@ export default function WhyEngine({
         </div>
       ))}
 
-      <button type="button" style={button} onClick={goDeeper} disabled={loading}>
+      <button
+        type="button"
+        style={button}
+        className="hl-interactive"
+        onClick={goDeeper}
+        disabled={loading}
+      >
         {loading ? "Digging deeper…" : chain.length === 0 ? "🤔 Why?" : "Why?"}
       </button>
 

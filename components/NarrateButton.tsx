@@ -7,11 +7,14 @@ const button: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
-  background: "var(--surface-2)",
+  background: "var(--glass)",
   color: "var(--text)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
   borderRadius: 999,
-  padding: "8px 14px",
+  padding: "9px 16px",
   fontSize: "0.9rem",
   fontWeight: 600,
 };
@@ -64,7 +67,13 @@ export default function NarrateButton({ text }: { text: string }) {
   if (!supported) return null;
 
   return (
-    <button type="button" style={button} onClick={toggle} aria-pressed={speaking}>
+    <button
+      type="button"
+      style={button}
+      className="hl-interactive"
+      onClick={toggle}
+      aria-pressed={speaking}
+    >
       {speaking ? "⏹ Stop" : "🔊 Read aloud"}
     </button>
   );

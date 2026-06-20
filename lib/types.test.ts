@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   parseIdentifyResult,
+  parseWhyStep,
   IdentifyError,
   IDENTIFY_RESULT_SCHEMA,
 } from "./types";
@@ -71,6 +72,26 @@ describe("parseIdentifyResult", () => {
     expect(() =>
       parseIdentifyResult({ ...validRaw, storyCards: [{ heading: "x" }] }),
     ).toThrow();
+  });
+});
+
+describe("parseWhyStep", () => {
+  it("parses and trims a valid why-step", () => {
+    const step = parseWhyStep({
+      question: "  Why does it exist? ",
+      answer: " To keep traffic safe. ",
+    });
+    expect(step).toEqual({
+      question: "Why does it exist?",
+      answer: "To keep traffic safe.",
+    });
+  });
+
+  it("throws on missing or empty fields", () => {
+    expect(() => parseWhyStep({ question: "Why?" })).toThrow();
+    expect(() => parseWhyStep({ question: "", answer: "x" })).toThrow();
+    expect(() => parseWhyStep({ question: "Why?", answer: "   " })).toThrow();
+    expect(() => parseWhyStep(null)).toThrow();
   });
 });
 

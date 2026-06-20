@@ -86,6 +86,49 @@ export class IdentifyError extends Error {
   }
 }
 
+// --- The Why Engine (curiosity component) ---------------------------------
+// Recursive "why does this exist?" chain. Each step digs one causal layer deeper
+// than the previous answer (Why Engine — History_Lens_Curiosity_Engine_Opportunity.md).
+
+export interface WhyStep {
+  /** The "Why...?" question at this layer. */
+  question: string;
+  /** A concise, accurate answer to that question. */
+  answer: string;
+}
+
+/** JSON Schema for one deeper why-layer (OpenAI Structured Outputs). */
+export const WHY_STEP_SCHEMA = {
+  type: "object",
+  properties: {
+    question: {
+      type: "string",
+      description: "A short 'Why...?' question that digs one causal layer deeper than the previous answer.",
+    },
+    answer: {
+      type: "string",
+      description: "A concise, accurate answer to that question — one or two sentences.",
+    },
+  },
+  required: ["question", "answer"],
+  additionalProperties: false,
+} as const;
+
+/** Validate untrusted model output as a WhyStep; throws on a bad shape. */
+export function parseWhyStep(value: unknown): WhyStep {
+  if (typeof value !== "object" || value === null) {
+    throw new IdentifyError("upstream", "Model returned a non-object why-step.");
+  }
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.question !== "string" || raw.question.trim() === "") {
+    throw new IdentifyError("upstream", "Why-step is missing a question.");
+  }
+  if (typeof raw.answer !== "string" || raw.answer.trim() === "") {
+    throw new IdentifyError("upstream", "Why-step is missing an answer.");
+  }
+  return { question: raw.question.trim(), answer: raw.answer.trim() };
+}
+
 function isStoryCard(value: unknown): value is StoryCard {
   if (typeof value !== "object" || value === null) return false;
   const card = value as Record<string, unknown>;

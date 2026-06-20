@@ -4,6 +4,9 @@ import {
   IdentifyError,
   type IdentifyResult,
   parseIdentifyResult,
+  WHY_STEP_SCHEMA,
+  type WhyStep,
+  parseWhyStep,
 } from "./types";
 
 // Single config point for the model. Default to gpt-4o-mini (vision + Structured
@@ -123,4 +126,82 @@ export async function identifyImage(
   }
 
   return result;
+}
+
+const WHY_SYSTEM = `You are the Why Engine inside History Lens — a curiosity tool that explores why things exist through recursive questioning. Given a topic and the chain of why-questions and answers so far, produce the SINGLE next "why" question that digs one causal layer deeper than the most recent answer, plus a concise, accurate answer to it.
+
+Rules:
+- If the chain is empty, start with "Why does this exist?" about the topic.
+- Each step must follow causally from the previous answer — keep moving toward ever more fundamental causes (mechanism → economics → society → science → physics), the way a curious child keeps asking "but why?".
+- Keep the answer to one or two plain sentences. Be accurate; do not invent specifics you are unsure of.
+- Do not repeat a question already in the chain.`;
+
+/**
+ * Given an object/topic and the why-chain so far, return the next deeper
+ * why-question + answer (the recursive Why Engine). Throws `IdentifyError`:
+ *   - "refused" on a model refusal / content filter
+ *   - "upstream" on a malformed/cut-off response or network/SDK failure
+ */
+export async function deeperWhy(
+  topic: string,
+  chain: WhyStep[],
+): Promise<WhyStep> {
+  const chainText =
+    chain.length === 0
+      ? "(no questions yet)"
+      : chain.map((s, i) => `${i + 1}. ${s.question}\n   ${s.answer}`).join("\n");
+
+  let completion;
+  try {
+    completion = await getClient().chat.completions.create({
+      model: MODEL,
+      max_completion_tokens: 1024,
+      messages: [
+        { role: "system", content: WHY_SYSTEM },
+        {
+          role: "user",
+          content: `Topic: ${topic}\n\nChain so far:\n${chainText}\n\nGive the next deeper why-step.`,
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "why_step",
+          strict: true,
+          schema: WHY_STEP_SCHEMA as unknown as Record<string, unknown>,
+        },
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown upstream error.";
+    throw new IdentifyError("upstream", message);
+  }
+
+  const choice = completion.choices[0];
+  if (!choice) {
+    throw new IdentifyError("upstream", "Model returned no choices.");
+  }
+  if (choice.message.refusal) {
+    throw new IdentifyError("refused", "The model declined to go deeper.");
+  }
+  if (choice.finish_reason === "content_filter") {
+    throw new IdentifyError("refused", "That line of questioning was blocked.");
+  }
+  if (choice.finish_reason === "length") {
+    throw new IdentifyError("upstream", "The response was cut off. Please try again.");
+  }
+
+  const content = choice.message.content;
+  if (!content) {
+    throw new IdentifyError("upstream", "Model returned an empty response.");
+  }
+
+  let json: unknown;
+  try {
+    json = JSON.parse(content);
+  } catch {
+    throw new IdentifyError("upstream", "Model returned non-JSON output.");
+  }
+
+  return parseWhyStep(json);
 }

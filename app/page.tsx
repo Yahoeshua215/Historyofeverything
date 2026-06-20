@@ -3,6 +3,7 @@
 import { useState, type CSSProperties } from "react";
 import Capture from "@/components/Capture";
 import StoryResult from "@/components/StoryResult";
+import WhyEngine from "@/components/WhyEngine";
 import type { CapturedImage } from "@/lib/image";
 import type { IdentifyErrorKind, IdentifyResult } from "@/lib/types";
 
@@ -115,6 +116,7 @@ export default function Home() {
       {status === "result" && result && (
         <>
           <StoryResult result={result} />
+          <WhyEngine topic={result.name} />
           <button type="button" style={resetButton} onClick={reset}>
             ← Scan again
           </button>

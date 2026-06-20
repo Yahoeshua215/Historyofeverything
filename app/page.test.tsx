@@ -15,6 +15,20 @@ vi.mock("@/components/Capture", () => ({
   ),
 }));
 
+// Stub DailyCards so it doesn't fetch /api/daily on mount (would collide with the
+// shared fetch mock). Exposes a button that selects a fixed daily card.
+vi.mock("@/components/DailyCards", () => ({
+  default: ({ onSelect }: { onSelect: (c: unknown) => void }) => (
+    <button
+      onClick={() =>
+        onSelect({ category: "history", title: "T", teaser: "x", subject: "Apollo 11" })
+      }
+    >
+      daily-stub
+    </button>
+  ),
+}));
+
 import Home from "./page";
 
 const result = {
@@ -132,5 +146,35 @@ describe("Home flow", () => {
     expect(await screen.findByText("Stop sign")).toBeTruthy();
     fireEvent.click(screen.getByText("Stop sign"));
     expect(await screen.findByText("← Scan again")).toBeTruthy();
+  });
+
+  it("tapping a daily card explores its subject via /api/explore", async () => {
+    const fetchMock = fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValue(jsonResponse({ ...result, name: "Apollo 11" }));
+
+    render(<Home />);
+    fireEvent.click(screen.getByText("daily-stub"));
+
+    expect(await screen.findByText("Apollo 11")).toBeTruthy();
+    const call = fetchMock.mock.calls.find((c) => c[0] === "/api/explore");
+    expect(call).toBeTruthy();
+    expect(JSON.parse(call![1].body)).toMatchObject({ topic: "Apollo 11", lens: "history" });
+  });
+
+  it("a rabbit-hole card explores the current subject through that lens", async () => {
+    const fetchMock = fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValue(jsonResponse(result));
+
+    render(<Home />);
+    fireEvent.click(screen.getByText("scan-stub"));
+    await screen.findByText("Stop sign");
+
+    fireEvent.click(screen.getByRole("button", { name: /economics/i }));
+
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some((c) => c[0] === "/api/explore")).toBe(true),
+    );
+    const call = fetchMock.mock.calls.find((c) => c[0] === "/api/explore");
+    expect(JSON.parse(call![1].body)).toMatchObject({ topic: "Stop sign", lens: "economics" });
   });
 });

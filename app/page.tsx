@@ -6,7 +6,10 @@ import StoryResult from "@/components/StoryResult";
 import WhyEngine from "@/components/WhyEngine";
 import ModeToggle from "@/components/ModeToggle";
 import HistoryView from "@/components/HistoryView";
+import DailyCards from "@/components/DailyCards";
+import RabbitHoleCards from "@/components/RabbitHoleCards";
 import type { CapturedImage } from "@/lib/image";
+import type { Category } from "@/lib/categories";
 import {
   clearHistory,
   getHistory,
@@ -14,7 +17,12 @@ import {
   type ScanRecord,
 } from "@/lib/history";
 import { getMode, setMode as persistMode } from "@/lib/prefs";
-import type { IdentifyErrorKind, IdentifyResult, Mode } from "@/lib/types";
+import type {
+  DailyCard,
+  IdentifyErrorKind,
+  IdentifyResult,
+  Mode,
+} from "@/lib/types";
 
 type Status = "idle" | "loading" | "result" | "error";
 type View = "scan" | "history";
@@ -151,6 +159,43 @@ export default function Home() {
     }
   }
 
+  // Build a story from a text topic — powers daily cards and rabbit-hole lenses.
+  async function explore(topic: string, lens?: string) {
+    setStatus("loading");
+    setErrorMessage(null);
+    try {
+      const res = await fetch("/api/explore", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ topic, lens, mode }),
+      });
+
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as
+          | { error?: { kind?: IdentifyErrorKind } }
+          | null;
+        fail(body?.error?.kind ?? "upstream");
+        return;
+      }
+
+      const data = (await res.json()) as IdentifyResult;
+      saveScan(data, mode);
+      setHistory(getHistory());
+      setResult(data);
+      setStatus("result");
+    } catch {
+      fail("network");
+    }
+  }
+
+  function onDailySelect(daily: DailyCard) {
+    explore(daily.subject, daily.category);
+  }
+
+  function onRabbitHole(category: Category) {
+    if (result) explore(result.name, category.key);
+  }
+
   if (view === "history") {
     return (
       <main style={main}>
@@ -178,7 +223,12 @@ export default function Home() {
         </button>
       </div>
 
-      {status === "idle" && <Capture onCapture={identify} />}
+      {status === "idle" && (
+        <>
+          <DailyCards mode={mode} onSelect={onDailySelect} />
+          <Capture onCapture={identify} />
+        </>
+      )}
 
       {status === "loading" && (
         <div style={statusBlock} role="status" aria-live="polite">
@@ -190,6 +240,7 @@ export default function Home() {
       {status === "result" && result && (
         <>
           <StoryResult result={result} />
+          <RabbitHoleCards onSelect={onRabbitHole} />
           <WhyEngine topic={result.name} mode={mode} />
           <button type="button" style={resetButton} onClick={reset}>
             ← Scan again

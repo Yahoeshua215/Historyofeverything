@@ -1,9 +1,12 @@
 import OpenAI from "openai";
 import {
+  DAILY_CARDS_SCHEMA,
+  type DailyCard,
   IDENTIFY_RESULT_SCHEMA,
   IdentifyError,
   type IdentifyResult,
   type Mode,
+  parseDailyCards,
   parseIdentifyResult,
   WHY_STEP_SCHEMA,
   type WhyStep,
@@ -213,4 +216,107 @@ export async function deeperWhy(
   }
 
   return parseWhyStep(json);
+}
+
+// Shared structured text-completion helper (no image): runs the call, maps the
+// failure modes to IdentifyError, and returns the parsed JSON for a caller to
+// validate against its own schema.
+async function structuredText(
+  messages: Array<{ role: "system" | "user"; content: string }>,
+  schemaName: string,
+  schema: Record<string, unknown>,
+  maxTokens: number,
+): Promise<unknown> {
+  let completion;
+  try {
+    completion = await getClient().chat.completions.create({
+      model: MODEL,
+      max_completion_tokens: maxTokens,
+      messages,
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: schemaName, strict: true, schema },
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown upstream error.";
+    throw new IdentifyError("upstream", message);
+  }
+
+  const choice = completion.choices[0];
+  if (!choice) throw new IdentifyError("upstream", "Model returned no choices.");
+  if (choice.message.refusal) {
+    throw new IdentifyError("refused", "The model declined this request.");
+  }
+  if (choice.finish_reason === "content_filter") {
+    throw new IdentifyError("refused", "That request was blocked by a content filter.");
+  }
+  if (choice.finish_reason === "length") {
+    throw new IdentifyError("upstream", "The response was cut off. Please try again.");
+  }
+
+  const content = choice.message.content;
+  if (!content) throw new IdentifyError("upstream", "Model returned an empty response.");
+
+  try {
+    return JSON.parse(content);
+  } catch {
+    throw new IdentifyError("upstream", "Model returned non-JSON output.");
+  }
+}
+
+/**
+ * Build a layered story for a text topic (no image) — powers daily-card and
+ * rabbit-hole exploration. `lens` (a category) tilts the story toward that angle.
+ */
+export async function exploreTopic(
+  topic: string,
+  lens?: string,
+  mode: Mode = "adult",
+): Promise<IdentifyResult> {
+  const lensLine = lens ? ` Focus on the ${lens} angle.` : "";
+  const json = await structuredText(
+    [
+      {
+        role: "system",
+        content:
+          "You are History Lens. Explain what something is and why it exists, in the same layered format used for scanned objects.",
+      },
+      {
+        role: "user",
+        content: `Explain: "${topic}".${lensLine}\n\nReturn: name (the subject, concise), confidence (use 1 unless the subject is genuinely unclear), instantAnswer (one sentence on what it is and why it exists), and 3–5 storyCards with headings like "What is it?", "Why does it exist?", "How has it changed?", "Interesting fact", "Related". Be accurate; do not invent specifics.\n\n${STYLE[mode]}`,
+      },
+    ],
+    "identify_result",
+    IDENTIFY_RESULT_SCHEMA as unknown as Record<string, unknown>,
+    4096,
+  );
+  return parseIdentifyResult(json);
+}
+
+/**
+ * Generate five "on this date in history" discovery cards — one per rabbit-hole
+ * category — for the given calendar date (e.g. "June 20").
+ */
+export async function exploreDaily(
+  monthDay: string,
+  mode: Mode = "adult",
+): Promise<DailyCard[]> {
+  const json = await structuredText(
+    [
+      {
+        role: "system",
+        content:
+          "You are History Lens' daily discovery. For a calendar date, surface genuinely notable things tied to that date in history.",
+      },
+      {
+        role: "user",
+        content: `Date: ${monthDay}. For each of these five categories in order — history, science, people, geography, economics — give ONE notable thing connected to this date in history (an event, discovery, or person associated with ${monthDay}). Only include things you are reasonably confident are tied to this date. For each card: category (the key), a short title, a one-sentence teaser, and a "subject" phrase to explore. Return exactly five cards, one per category, in that order.\n\n${STYLE[mode]}`,
+      },
+    ],
+    "daily_cards",
+    DAILY_CARDS_SCHEMA as unknown as Record<string, unknown>,
+    2000,
+  );
+  return parseDailyCards(json);
 }

@@ -93,6 +93,80 @@ export class IdentifyError extends Error {
   }
 }
 
+// --- Daily discovery cards -------------------------------------------------
+// Five "on this date in history" cards, one per rabbit-hole category, refreshed
+// each day. Tapping one explores its `subject` in the normal story + why format.
+
+export interface DailyCard {
+  /** Rabbit-hole category key (history/science/people/geography/economics). */
+  category: string;
+  /** Short headline. */
+  title: string;
+  /** One-line hook. */
+  teaser: string;
+  /** The phrase to explore when the card is tapped. */
+  subject: string;
+}
+
+export const DAILY_CARDS_SCHEMA = {
+  type: "object",
+  properties: {
+    cards: {
+      type: "array",
+      description: "Exactly five cards, one per category, in the given order.",
+      items: {
+        type: "object",
+        properties: {
+          category: {
+            type: "string",
+            description: "One of: history, science, people, geography, economics.",
+          },
+          title: { type: "string", description: "Short headline (a few words)." },
+          teaser: { type: "string", description: "One-sentence hook." },
+          subject: {
+            type: "string",
+            description: "The specific thing to explore (event, discovery, or person).",
+          },
+        },
+        required: ["category", "title", "teaser", "subject"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["cards"],
+  additionalProperties: false,
+} as const;
+
+function isDailyCard(value: unknown): value is DailyCard {
+  if (typeof value !== "object" || value === null) return false;
+  const c = value as Record<string, unknown>;
+  return (
+    typeof c.category === "string" &&
+    typeof c.title === "string" &&
+    c.title.trim() !== "" &&
+    typeof c.teaser === "string" &&
+    typeof c.subject === "string" &&
+    c.subject.trim() !== ""
+  );
+}
+
+/** Validate untrusted model output as a list of daily cards. */
+export function parseDailyCards(value: unknown): DailyCard[] {
+  if (typeof value !== "object" || value === null) {
+    throw new IdentifyError("upstream", "Model returned a non-object daily response.");
+  }
+  const raw = (value as Record<string, unknown>).cards;
+  if (!Array.isArray(raw) || !raw.every(isDailyCard) || raw.length === 0) {
+    throw new IdentifyError("upstream", "Model returned malformed daily cards.");
+  }
+  return raw.map((c) => ({
+    category: c.category.trim(),
+    title: c.title.trim(),
+    teaser: c.teaser.trim(),
+    subject: c.subject.trim(),
+  }));
+}
+
 // --- The Why Engine (curiosity component) ---------------------------------
 // Recursive "why does this exist?" chain. Each step digs one causal layer deeper
 // than the previous answer (Why Engine — History_Lens_Curiosity_Engine_Opportunity.md).

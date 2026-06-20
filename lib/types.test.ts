@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   parseIdentifyResult,
   parseWhyStep,
+  parseDailyCards,
   IdentifyError,
   IDENTIFY_RESULT_SCHEMA,
 } from "./types";
@@ -92,6 +93,33 @@ describe("parseWhyStep", () => {
     expect(() => parseWhyStep({ question: "", answer: "x" })).toThrow();
     expect(() => parseWhyStep({ question: "Why?", answer: "   " })).toThrow();
     expect(() => parseWhyStep(null)).toThrow();
+  });
+});
+
+describe("parseDailyCards", () => {
+  const card = {
+    category: "history",
+    title: " Event ",
+    teaser: " A thing happened. ",
+    subject: " A thing ",
+  };
+
+  it("parses and trims a cards array", () => {
+    const cards = parseDailyCards({ cards: [card] });
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toEqual({
+      category: "history",
+      title: "Event",
+      teaser: "A thing happened.",
+      subject: "A thing",
+    });
+  });
+
+  it("throws on missing/empty cards or bad shape", () => {
+    expect(() => parseDailyCards({ cards: [] })).toThrow();
+    expect(() => parseDailyCards({})).toThrow();
+    expect(() => parseDailyCards({ cards: [{ category: "history" }] })).toThrow();
+    expect(() => parseDailyCards(null)).toThrow();
   });
 });
 

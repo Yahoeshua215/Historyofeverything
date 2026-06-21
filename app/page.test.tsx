@@ -172,6 +172,40 @@ describe("Home flow", () => {
     expect(JSON.parse(call![1].body)).toMatchObject({ topic: "Apollo 11", lens: "history" });
   });
 
+  it("keeps next-question image + text CTAs on the result page", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(result));
+
+    render(<Home />);
+    fireEvent.click(screen.getByText("scan-stub"));
+    await screen.findByText("Stop sign");
+
+    // The "Ask the next question" section is present...
+    expect(screen.getByRole("region", { name: /ask the next question/i })).toBeTruthy();
+    // ...with a text field and an image control (header + next-question stubs).
+    expect(screen.getByLabelText(/search any topic/i)).toBeTruthy();
+    expect(screen.getAllByText("scan-stub").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("the next-question search explores a new topic from the result page", async () => {
+    const fetchMock = fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValue(jsonResponse(result));
+
+    render(<Home />);
+    fireEvent.click(screen.getByText("scan-stub"));
+    await screen.findByText("Stop sign");
+
+    fireEvent.change(screen.getByLabelText(/search any topic/i), {
+      target: { value: "jet engine" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^go$/i }));
+
+    await waitFor(() => {
+      const call = fetchMock.mock.calls.find((c) => c[0] === "/api/explore");
+      expect(call).toBeTruthy();
+      expect(JSON.parse(call![1].body)).toMatchObject({ topic: "jet engine" });
+    });
+  });
+
   it("a rabbit-hole card explores the current subject through that lens", async () => {
     const fetchMock = fetch as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue(jsonResponse(result));

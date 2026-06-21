@@ -7,6 +7,8 @@ interface CaptureProps {
   onCapture: (image: CapturedImage) => void;
   /** Surface a capture-local problem (bad file / decode failure) to the page. */
   onError?: (message: string) => void;
+  /** Icon-only variant for inline "next question" controls. */
+  compact?: boolean;
   /**
    * Image processor seam — defaults to the real canvas downscale. Tests inject a
    * fake so they don't depend on a real canvas/decoder.
@@ -14,7 +16,7 @@ interface CaptureProps {
   processImage?: (file: File) => Promise<CapturedImage>;
 }
 
-// Compact header pill — matches the other header controls.
+// Glass pill matching the other controls.
 const button: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -31,6 +33,13 @@ const button: CSSProperties = {
   fontWeight: 600,
 };
 
+// Icon-only square for inline next-question use.
+const compactButton: CSSProperties = {
+  ...button,
+  padding: "12px 14px",
+  fontSize: "1.1rem",
+};
+
 /**
  * Camera / file capture (U3 / R1), as a compact header trigger. On mobile the
  * input offers camera + library; on desktop a file picker. The chosen image is
@@ -40,6 +49,7 @@ const button: CSSProperties = {
 export default function Capture({
   onCapture,
   onError,
+  compact = false,
   processImage = downscaleToJpeg,
 }: CaptureProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -84,12 +94,13 @@ export default function Capture({
       />
       <button
         type="button"
-        style={button}
+        style={compact ? compactButton : button}
         className="hl-interactive"
         onClick={openPicker}
         disabled={processing}
+        aria-label={compact ? "Scan an image" : undefined}
       >
-        {processing ? "Reading…" : "📷 Scan"}
+        {compact ? (processing ? "…" : "📷") : processing ? "Reading…" : "📷 Image"}
       </button>
     </>
   );

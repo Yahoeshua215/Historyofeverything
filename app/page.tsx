@@ -114,6 +114,25 @@ const resetButton: CSSProperties = {
 
 const errorText: CSSProperties = { margin: 0, color: "var(--danger)", textAlign: "center" };
 
+// "Ask the next question" — small image + text CTAs kept on the result page so
+// the user can pose a new query without going back to the start.
+const nextQuery: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 10,
+  borderTop: "1px solid var(--border)",
+  paddingTop: 20,
+};
+
+const nextQueryHeading: CSSProperties = {
+  margin: 0,
+  fontSize: "0.78rem",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  color: "var(--text-muted)",
+};
+
 export default function Home() {
   const [status, setStatus] = useState<Status>("idle");
   const [view, setView] = useState<View>("scan");
@@ -313,6 +332,19 @@ export default function Home() {
             topic={result.name}
             mode={mode}
           />
+
+          <section style={nextQuery} aria-label="Ask the next question">
+            <h2 style={nextQueryHeading}>Ask the next question</h2>
+            <SearchBox
+              compact
+              placeholder="Type a topic…"
+              onSearch={onSearch}
+              trailing={
+                <Capture compact onCapture={identify} onError={captureError} />
+              }
+            />
+          </section>
+
           <button
             type="button"
             style={resetButton}

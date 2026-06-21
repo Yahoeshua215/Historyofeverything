@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { IdentifyErrorKind, Mode, WhyStep } from "@/lib/types";
 
 const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
@@ -23,6 +23,8 @@ const wrap: CSSProperties = {
 const stepStyle: CSSProperties = {
   borderLeft: "3px solid var(--accent)",
   paddingLeft: 16,
+  // Leave breathing room when this answer is scrolled to the top of the viewport.
+  scrollMarginTop: 20,
 };
 
 const aStyle: CSSProperties = {
@@ -72,6 +74,17 @@ export default function WhyEngine({
   const [chain, setChain] = useState<WhyStep[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const latestRef = useRef<HTMLDivElement | null>(null);
+
+  // As each new answer arrives, pull it to the top of the viewport so it's the
+  // focus — everything above scrolls out of view if needed.
+  useEffect(() => {
+    if (chain.length === 0) return;
+    const el = latestRef.current;
+    if (el && typeof el.scrollIntoView === "function") {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [chain.length]);
 
   async function goDeeper() {
     setLoading(true);
@@ -101,7 +114,12 @@ export default function WhyEngine({
   return (
     <section style={wrap} aria-label="Why engine">
       {chain.map((step, index) => (
-        <div key={index} className="hl-fade-up" style={stepStyle}>
+        <div
+          key={index}
+          ref={index === chain.length - 1 ? latestRef : undefined}
+          className="hl-fade-up"
+          style={stepStyle}
+        >
           <p style={aStyle}>{step.answer}</p>
         </div>
       ))}
@@ -113,7 +131,7 @@ export default function WhyEngine({
         onClick={goDeeper}
         disabled={loading}
       >
-        {loading ? "Digging deeper…" : "WHY"}
+        {loading ? "Digging deeper…" : "But why?"}
       </button>
 
       {chain.length > 0 && (

@@ -18,6 +18,16 @@ describe("RabbitHoleCards", () => {
     );
   });
 
+  it("marks the active lens as pressed", () => {
+    render(<RabbitHoleCards onSelect={vi.fn()} active="science" />);
+    expect(
+      screen.getByRole("button", { name: /science/i }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      screen.getByRole("button", { name: /history/i }).getAttribute("aria-pressed"),
+    ).toBe("false");
+  });
+
   it("disables the chips when disabled", () => {
     render(<RabbitHoleCards onSelect={vi.fn()} disabled />);
     expect(

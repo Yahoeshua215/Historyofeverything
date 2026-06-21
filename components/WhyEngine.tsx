@@ -113,11 +113,7 @@ export default function WhyEngine({
         onClick={goDeeper}
         disabled={loading}
       >
-        {loading
-          ? "Digging deeper…"
-          : chain.length === 0
-            ? "🤔 Why does this exist?"
-            : "Ask why again"}
+        {loading ? "Digging deeper…" : "WHY"}
       </button>
 
       {chain.length > 0 && (

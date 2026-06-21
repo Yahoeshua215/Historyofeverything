@@ -7,30 +7,36 @@ import type { DailyCard, IdentifyErrorKind, Mode } from "@/lib/types";
 const EMOJI = new Map(CATEGORIES.map((c) => [c.key, c.emoji]));
 const LABEL = new Map(CATEGORIES.map((c) => [c.key, c.label]));
 
-const wrap: CSSProperties = { display: "flex", flexDirection: "column", gap: 10 };
+const wrap: CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
 const heading: CSSProperties = {
   margin: 0,
   fontSize: "0.78rem",
+  fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.06em",
+  letterSpacing: "0.08em",
   color: "var(--text-muted)",
 };
 const card: CSSProperties = {
   textAlign: "left",
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
+  background: "var(--glass)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
   borderRadius: "var(--radius)",
-  padding: 14,
+  padding: 16,
   display: "flex",
   flexDirection: "column",
-  gap: 4,
+  gap: 5,
   width: "100%",
+  color: "var(--text)",
 };
 const cardCat: CSSProperties = {
   fontSize: "0.72rem",
+  fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.05em",
-  color: "var(--accent)",
+  letterSpacing: "0.06em",
+  color: "var(--accent-strong)",
 };
 const cardTitle: CSSProperties = { margin: 0, fontWeight: 600, fontSize: "1.02rem" };
 const cardTeaser: CSSProperties = {
@@ -144,7 +150,7 @@ export default function DailyCards({
           <button
             key={`${c.category}-${index}`}
             type="button"
-            className="hl-fade-up"
+            className="hl-fade-up hl-interactive"
             style={{ ...card, animationDelay: `${index * 70}ms` }}
             onClick={() => onSelect(c)}
           >

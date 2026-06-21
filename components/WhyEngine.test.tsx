@@ -27,12 +27,13 @@ describe("WhyEngine", () => {
     render(<WhyEngine topic="Stop sign" />);
     fireEvent.click(screen.getByRole("button", { name: /why/i }));
 
-    expect(await screen.findByText("Why does it exist?")).toBeTruthy();
-    expect(screen.getByText("For safety.")).toBeTruthy();
+    // Only the answer is shown (the question is redundant and hidden).
+    expect(await screen.findByText("For safety.")).toBeTruthy();
+    expect(screen.queryByText("Why does it exist?")).toBeNull();
     expect(screen.getByTestId("why-depth").textContent).toContain("1");
 
     fireEvent.click(screen.getByRole("button", { name: /why/i }));
-    expect(await screen.findByText("Why is safety needed?")).toBeTruthy();
+    expect(await screen.findByText("Cars are fast.")).toBeTruthy();
     expect(screen.getByTestId("why-depth").textContent).toContain("2");
   });
 
@@ -44,7 +45,7 @@ describe("WhyEngine", () => {
 
     render(<WhyEngine topic="Stop sign" />);
     fireEvent.click(screen.getByRole("button", { name: /why/i }));
-    await screen.findByText("Why does it exist?");
+    await screen.findByText("Because.");
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body).toEqual({ topic: "Stop sign", chain: [], mode: "adult" });

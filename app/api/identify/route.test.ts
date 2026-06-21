@@ -14,11 +14,6 @@ const sampleResult: IdentifyResult = {
   name: "Stop sign",
   confidence: 0.95,
   instantAnswer: "An octagonal red sign requiring drivers to come to a full stop.",
-  storyCards: [
-    { heading: "What is it?", body: "A regulatory traffic sign." },
-    { heading: "Why does it exist?", body: "To assign right-of-way at intersections." },
-    { heading: "Interesting fact", body: "It was originally yellow." },
-  ],
 };
 
 function postRequest(body: unknown): Request {
@@ -44,7 +39,6 @@ describe("POST /api/identify", () => {
 
     const json = await res.json();
     expect(json.name).toBe("Stop sign");
-    expect(json.storyCards).toHaveLength(3);
     expect(json.instantAnswer.length).toBeGreaterThan(0);
 
     expect(identifyImage).toHaveBeenCalledWith("ZmFrZS1iYXNlNjQ=", "image/jpeg", "adult");

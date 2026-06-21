@@ -8,26 +8,30 @@ const wrap: CSSProperties = { display: "flex", flexDirection: "column", gap: 10 
 const heading: CSSProperties = {
   margin: 0,
   fontSize: "0.78rem",
+  fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.06em",
+  letterSpacing: "0.08em",
   color: "var(--text-muted)",
 };
 
 const grid: CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
-  gap: 8,
+  gap: 9,
 };
 
 const chip: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
-  background: "var(--surface)",
+  background: "var(--glass)",
   color: "var(--text)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
   borderRadius: 999,
-  padding: "8px 14px",
+  padding: "9px 16px",
   fontSize: "0.95rem",
   fontWeight: 600,
 };
@@ -51,7 +55,7 @@ export default function RabbitHoleCards({
           <button
             key={category.key}
             type="button"
-            className="hl-fade-up"
+            className="hl-fade-up hl-interactive"
             style={{ ...chip, animationDelay: `${index * 60}ms` }}
             onClick={() => onSelect(category)}
             disabled={disabled}

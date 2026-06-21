@@ -13,11 +13,6 @@ const result: IdentifyResult = {
   name: "Wright brothers' first flight",
   confidence: 1,
   instantAnswer: "The first sustained powered flight, in 1903.",
-  storyCards: [
-    { heading: "What is it?", body: "A milestone in aviation." },
-    { heading: "Why?", body: "Controlled powered flight." },
-    { heading: "Fact", body: "It lasted 12 seconds." },
-  ],
 };
 
 function postRequest(body: unknown): Request {

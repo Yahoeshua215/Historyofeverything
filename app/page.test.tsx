@@ -73,7 +73,7 @@ describe("Home flow", () => {
 
     expect(await screen.findByText("Stop sign")).toBeTruthy();
     expect(screen.getByText("An octagonal red sign requiring drivers to stop.")).toBeTruthy();
-    expect(screen.getByText("← Scan again")).toBeTruthy();
+    expect(screen.getByText("← Start over")).toBeTruthy();
   });
 
   it("shows a friendly message (not a crash) on a refusal (R5)", async () => {
@@ -106,7 +106,7 @@ describe("Home flow", () => {
     fireEvent.click(screen.getByText("scan-stub"));
 
     await screen.findByText("Stop sign");
-    fireEvent.click(screen.getByText("← Scan again"));
+    fireEvent.click(screen.getByText("← Start over"));
 
     await waitFor(() => expect(screen.getByText("scan-stub")).toBeTruthy());
     expect(screen.queryByText("Stop sign")).toBeNull();
@@ -134,13 +134,29 @@ describe("Home flow", () => {
 
     // History button shows the count; reset away from the result, then open it.
     expect(await screen.findByRole("button", { name: /history \(1\)/i })).toBeTruthy();
-    fireEvent.click(screen.getByText("← Scan again"));
+    fireEvent.click(screen.getByText("← Start over"));
     fireEvent.click(await screen.findByRole("button", { name: /history \(1\)/i }));
 
     // The saved record is listed; selecting it re-opens the story.
     expect(await screen.findByText("Stop sign")).toBeTruthy();
     fireEvent.click(screen.getByText("Stop sign"));
-    expect(await screen.findByText("← Scan again")).toBeTruthy();
+    expect(await screen.findByText("← Start over")).toBeTruthy();
+  });
+
+  it("a text search explores the typed term via /api/explore", async () => {
+    const fetchMock = fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValue(jsonResponse({ ...result, name: "Printing press" }));
+
+    render(<Home />);
+    fireEvent.change(screen.getByLabelText(/search any topic/i), {
+      target: { value: "printing press" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /explore/i }));
+
+    expect(await screen.findByText("Printing press")).toBeTruthy();
+    const call = fetchMock.mock.calls.find((c) => c[0] === "/api/explore");
+    expect(call).toBeTruthy();
+    expect(JSON.parse(call![1].body)).toMatchObject({ topic: "printing press" });
   });
 
   it("tapping a daily card explores its subject via /api/explore", async () => {

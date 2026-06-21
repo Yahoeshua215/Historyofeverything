@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 import type { IdentifyResult } from "@/lib/types";
-import NarrateButton from "./NarrateButton";
 
 // Below this confidence we surface an honest "might not be exact" hint (vision: be
 // honest about uncertainty rather than hiding it).
@@ -48,9 +47,6 @@ export default function StoryResult({ result }: { result: IdentifyResult }) {
   const { name, instantAnswer, confidence } = result;
   const lowConfidence = confidence < LOW_CONFIDENCE_THRESHOLD;
 
-  // Plain-text version for read-aloud narration.
-  const narration = [name, instantAnswer].join(". ");
-
   return (
     <section style={wrap} aria-label="Identification result" className="hl-pop">
       <h1 style={nameStyle}>{name}</h1>
@@ -60,7 +56,6 @@ export default function StoryResult({ result }: { result: IdentifyResult }) {
           Not fully sure — this might not be exact
         </span>
       )}
-      <NarrateButton text={narration} />
     </section>
   );
 }

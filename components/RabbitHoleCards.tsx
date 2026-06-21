@@ -14,13 +14,14 @@ const heading: CSSProperties = {
   color: "var(--text-muted)",
 };
 
-const grid: CSSProperties = {
+const row: CSSProperties = {
   display: "flex",
-  flexWrap: "wrap",
   gap: 9,
+  paddingBottom: 4,
 };
 
 const chip: CSSProperties = {
+  flex: "0 0 auto",
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
@@ -36,34 +37,50 @@ const chip: CSSProperties = {
   fontWeight: 600,
 };
 
+// The applied lens — highlighted like a selected filter.
+const chipActive: CSSProperties = {
+  ...chip,
+  background: "var(--accent-gradient)",
+  color: "var(--accent-ink)",
+  border: "1px solid transparent",
+  boxShadow: "var(--shadow-accent)",
+};
+
 /**
- * Rabbit-hole lenses — explore the current subject through a different angle.
- * Shown alongside a result; the main story stays front and center.
+ * Lens filter bar — view the current subject through a different angle (history,
+ * science, people, …). Each lens re-explores the same subject from that
+ * viewpoint; the active lens is highlighted like a selected filter.
  */
 export default function RabbitHoleCards({
   onSelect,
+  active = null,
   disabled = false,
 }: {
   onSelect: (category: Category) => void;
+  active?: string | null;
   disabled?: boolean;
 }) {
   return (
-    <section style={wrap} aria-label="Explore other angles">
-      <h2 style={heading}>Go down a rabbit hole</h2>
-      <div style={grid}>
-        {CATEGORIES.map((category, index) => (
-          <button
-            key={category.key}
-            type="button"
-            className="hl-fade-up hl-interactive"
-            style={{ ...chip, animationDelay: `${index * 60}ms` }}
-            onClick={() => onSelect(category)}
-            disabled={disabled}
-          >
-            <span aria-hidden>{category.emoji}</span>
-            {category.label}
-          </button>
-        ))}
+    <section style={wrap} aria-label="View through a lens">
+      <h2 style={heading}>🔭 See it through a lens</h2>
+      <div style={row} className="hl-scroll-x">
+        {CATEGORIES.map((category) => {
+          const isActive = active === category.key;
+          return (
+            <button
+              key={category.key}
+              type="button"
+              className="hl-interactive"
+              style={isActive ? chipActive : chip}
+              aria-pressed={isActive}
+              onClick={() => onSelect(category)}
+              disabled={disabled}
+            >
+              <span aria-hidden>{category.emoji}</span>
+              {category.label}
+            </button>
+          );
+        })}
       </div>
     </section>
   );

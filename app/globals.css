@@ -113,6 +113,15 @@ button:disabled {
   transform: translateY(0) scale(0.99);
 }
 
+/* Horizontal filter row that scrolls on small screens without a visible bar. */
+.hl-scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.hl-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
 /* Gradient text for hero titles. */
 .hl-gradient-text {
   background: var(--accent-gradient);

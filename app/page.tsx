@@ -113,6 +113,10 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("adult");
   const [history, setHistory] = useState<ScanRecord[]>([]);
+  // The stable thing being explored, plus which lens (if any) is currently
+  // applied to it — so the lens bar acts like a filter on one subject.
+  const [subject, setSubject] = useState<string | null>(null);
+  const [activeLens, setActiveLens] = useState<string | null>(null);
 
   // Hydrate persisted state after mount (avoids SSR/localStorage mismatch).
   useEffect(() => {
@@ -129,6 +133,8 @@ export default function Home() {
     setStatus("idle");
     setResult(null);
     setErrorMessage(null);
+    setSubject(null);
+    setActiveLens(null);
   }
 
   function fail(kind: IdentifyErrorKind | "network") {
@@ -138,6 +144,8 @@ export default function Home() {
 
   function openRecord(record: ScanRecord) {
     setResult(record);
+    setSubject(record.name);
+    setActiveLens(null);
     setStatus("result");
     setView("scan");
   }
@@ -169,6 +177,9 @@ export default function Home() {
       saveScan(data, mode);
       setHistory(getHistory());
       setResult(data);
+      // A fresh scan is the new subject, viewed through no lens yet.
+      setSubject(data.name);
+      setActiveLens(null);
       setStatus("result");
     } catch {
       fail("network");
@@ -205,11 +216,16 @@ export default function Home() {
   }
 
   function onDailySelect(daily: DailyCard) {
+    setSubject(daily.subject);
+    setActiveLens(daily.category);
     explore(daily.subject, daily.category);
   }
 
+  // Apply a lens to the current subject — re-views the same thing from that angle.
   function onRabbitHole(category: Category) {
-    if (result) explore(result.name, category.key);
+    if (!subject) return;
+    setActiveLens(category.key);
+    explore(subject, category.key);
   }
 
   if (view === "history") {
@@ -252,17 +268,27 @@ export default function Home() {
       )}
 
       {status === "loading" && (
-        <div style={statusBlock} role="status" aria-live="polite">
-          <span style={{ fontSize: "2rem" }}>🔍</span>
-          <span>Looking it up…</span>
-        </div>
+        <>
+          {/* Keep the lens filter visible while a lens switch reloads. */}
+          {subject && (
+            <RabbitHoleCards active={activeLens} onSelect={onRabbitHole} disabled />
+          )}
+          <div style={statusBlock} role="status" aria-live="polite">
+            <span style={{ fontSize: "2rem" }}>🔍</span>
+            <span>Looking it up…</span>
+          </div>
+        </>
       )}
 
       {status === "result" && result && (
         <>
+          <RabbitHoleCards active={activeLens} onSelect={onRabbitHole} />
           <StoryResult result={result} />
-          <WhyEngine topic={result.name} mode={mode} />
-          <RabbitHoleCards onSelect={onRabbitHole} />
+          <WhyEngine
+            key={`${result.name}:${activeLens ?? ""}`}
+            topic={result.name}
+            mode={mode}
+          />
           <button
             type="button"
             style={resetButton}

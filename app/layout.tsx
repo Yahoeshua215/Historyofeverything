@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "History Lens",
-  description: "Point your camera at anything. Understand why it exists.",
+  title: "Everywhy",
+  description: "Capture the Why behind everything.",
 };
 
 export const viewport: Viewport = {

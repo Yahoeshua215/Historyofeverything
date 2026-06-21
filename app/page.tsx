@@ -48,18 +48,38 @@ const main: CSSProperties = {
   minHeight: "100dvh",
 };
 
-const header: CSSProperties = { display: "flex", flexDirection: "column", gap: 8 };
-const title: CSSProperties = {
-  margin: 0,
-  fontSize: "clamp(1.7rem, 7vw, 2.2rem)",
-  fontWeight: 700,
+// Small persistent brand/home link, shown once you've left the landing.
+const wordmark: CSSProperties = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  fontSize: "1.15rem",
+  fontWeight: 800,
   letterSpacing: "-0.03em",
 };
-const tagline: CSSProperties = {
+
+// Landing hero — the name front and centre with a soft one-liner.
+const hero: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  textAlign: "center",
+  gap: 12,
+  padding: "28px 0 8px",
+};
+const heroTitle: CSSProperties = {
+  margin: 0,
+  fontSize: "clamp(2.6rem, 12vw, 4rem)",
+  fontWeight: 800,
+  letterSpacing: "-0.04em",
+  lineHeight: 1,
+};
+const heroDesc: CSSProperties = {
   margin: 0,
   color: "var(--text-muted)",
-  fontSize: "1rem",
-  lineHeight: 1.45,
+  fontSize: "clamp(1.05rem, 4.5vw, 1.3rem)",
+  lineHeight: 1.5,
+  maxWidth: 420,
 };
 
 const controls: CSSProperties = {
@@ -73,7 +93,9 @@ const controls: CSSProperties = {
 const controlsRight: CSSProperties = {
   display: "flex",
   alignItems: "center",
+  justifyContent: "flex-end",
   gap: 10,
+  flexWrap: "wrap",
 };
 
 const historyButton: CSSProperties = {
@@ -283,14 +305,21 @@ export default function Home() {
 
   return (
     <main style={main}>
-      <header style={header}>
-        <h1 style={title} className="hl-gradient-text">History Lens</h1>
-        <p style={tagline}>Search anything — or scan it. Understand why it exists.</p>
-      </header>
-
       <div style={controls}>
-        <ModeToggle mode={mode} onChange={changeMode} />
+        {status === "idle" ? (
+          <span aria-hidden />
+        ) : (
+          <button
+            type="button"
+            style={wordmark}
+            className="hl-gradient-text"
+            onClick={reset}
+          >
+            Everywhy
+          </button>
+        )}
         <div style={controlsRight}>
+          <ModeToggle mode={mode} onChange={changeMode} />
           <Capture onCapture={identify} onError={captureError} />
           <button
             type="button"
@@ -305,6 +334,10 @@ export default function Home() {
 
       {status === "idle" && (
         <>
+          <section style={hero}>
+            <h1 style={heroTitle} className="hl-gradient-text">Everywhy</h1>
+            <p style={heroDesc}>Capture the Why behind everything.</p>
+          </section>
           <SearchBox onSearch={onSearch} />
           <DailyCards mode={mode} onSelect={onDailySelect} />
         </>

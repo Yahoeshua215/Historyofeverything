@@ -39,7 +39,7 @@ export function isAllowedMediaType(value: unknown): value is AllowedMediaType {
   );
 }
 
-const PROMPT = `You are History Lens. Identify the single most prominent object in this image — a man-made thing (sign, building, tool, vehicle) or a natural one (plant, rock, animal).
+const PROMPT = `You are Everywhy. Identify the single most prominent object in this image — a man-made thing (sign, building, tool, vehicle) or a natural one (plant, rock, animal).
 
 Return:
 - name: what the object is, in a few words.
@@ -138,7 +138,7 @@ export async function identifyImage(
   return result;
 }
 
-const WHY_SYSTEM = `You are the Why Engine inside History Lens — a curiosity tool that explores why things exist through recursive questioning. Given a topic and the chain of why-questions and answers so far, produce the SINGLE next "why" question that digs one causal layer deeper than the most recent answer, plus a concise, accurate answer to it.
+const WHY_SYSTEM = `You are the Why Engine inside Everywhy — a curiosity tool that explores why things exist through recursive questioning. Given a topic and the chain of why-questions and answers so far, produce the SINGLE next "why" question that digs one causal layer deeper than the most recent answer, plus a concise, accurate answer to it.
 
 Rules:
 - If the chain is empty, start with "Why does this exist?" about the topic.
@@ -280,7 +280,7 @@ export async function exploreTopic(
       {
         role: "system",
         content:
-          "You are History Lens. Explain what something is and why it exists, in the same concise format used for scanned objects.",
+          "You are Everywhy. Explain what something is and why it exists, in the same concise format used for scanned objects.",
       },
       {
         role: "user",
@@ -307,7 +307,7 @@ export async function exploreDaily(
       {
         role: "system",
         content:
-          "You are History Lens' daily discovery. For a calendar date, surface genuinely notable things tied to that date in history.",
+          "You are Everywhy's daily discovery. For a calendar date, surface genuinely notable things tied to that date in history.",
       },
       {
         role: "user",

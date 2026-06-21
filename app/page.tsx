@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import Capture from "@/components/Capture";
+import SearchBox from "@/components/SearchBox";
 import StoryResult from "@/components/StoryResult";
 import WhyEngine from "@/components/WhyEngine";
 import ModeToggle from "@/components/ModeToggle";
@@ -66,6 +67,13 @@ const controls: CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   gap: 12,
+  flexWrap: "wrap",
+};
+
+const controlsRight: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
 };
 
 const historyButton: CSSProperties = {
@@ -142,6 +150,12 @@ export default function Home() {
     setStatus("error");
   }
 
+  // A capture-local problem (bad file / decode failure) reuses the error view.
+  function captureError(message: string) {
+    setErrorMessage(message);
+    setStatus("error");
+  }
+
   function openRecord(record: ScanRecord) {
     setResult(record);
     setSubject(record.name);
@@ -215,6 +229,13 @@ export default function Home() {
     }
   }
 
+  // Free-text search — explore any topic by name (no lens applied yet).
+  function onSearch(term: string) {
+    setSubject(term);
+    setActiveLens(null);
+    explore(term);
+  }
+
   function onDailySelect(daily: DailyCard) {
     setSubject(daily.subject);
     setActiveLens(daily.category);
@@ -245,25 +266,28 @@ export default function Home() {
     <main style={main}>
       <header style={header}>
         <h1 style={title} className="hl-gradient-text">History Lens</h1>
-        <p style={tagline}>Point your camera at anything. Understand why it exists.</p>
+        <p style={tagline}>Search anything — or scan it. Understand why it exists.</p>
       </header>
 
       <div style={controls}>
         <ModeToggle mode={mode} onChange={changeMode} />
-        <button
-          type="button"
-          style={historyButton}
-          className="hl-interactive"
-          onClick={() => setView("history")}
-        >
-          🕘 History{history.length > 0 ? ` (${history.length})` : ""}
-        </button>
+        <div style={controlsRight}>
+          <Capture onCapture={identify} onError={captureError} />
+          <button
+            type="button"
+            style={historyButton}
+            className="hl-interactive"
+            onClick={() => setView("history")}
+          >
+            🕘 History{history.length > 0 ? ` (${history.length})` : ""}
+          </button>
+        </div>
       </div>
 
       {status === "idle" && (
         <>
+          <SearchBox onSearch={onSearch} />
           <DailyCards mode={mode} onSelect={onDailySelect} />
-          <Capture onCapture={identify} />
         </>
       )}
 
@@ -295,7 +319,7 @@ export default function Home() {
             className="hl-interactive"
             onClick={reset}
           >
-            ← Scan again
+            ← Start over
           </button>
         </>
       )}

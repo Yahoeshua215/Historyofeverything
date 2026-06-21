@@ -25,43 +25,46 @@ describe("Capture", () => {
     expect(input.getAttribute("capture")).toBe("environment");
   });
 
-  it("fires onCapture with the processed image and shows a preview", async () => {
+  it("fires onCapture with the processed image", async () => {
     const onCapture = vi.fn();
     const processImage = vi.fn().mockResolvedValue(fakeCaptured);
-    render(
-      <Capture onCapture={onCapture} processImage={processImage} />,
-    );
+    render(<Capture onCapture={onCapture} processImage={processImage} />);
 
     selectFile(screen.getByTestId("capture-input"), imageFile());
 
     await waitFor(() => expect(onCapture).toHaveBeenCalledWith(fakeCaptured));
     expect(processImage).toHaveBeenCalledOnce();
-    expect((screen.getByAltText("Captured preview") as HTMLImageElement).src).toContain(
-      "data:image/jpeg",
-    );
   });
 
-  it("rejects a non-image file without processing or calling onCapture", async () => {
+  it("reports a non-image file via onError without processing or capturing", async () => {
     const onCapture = vi.fn();
+    const onError = vi.fn();
     const processImage = vi.fn();
-    render(<Capture onCapture={onCapture} processImage={processImage} />);
+    render(
+      <Capture onCapture={onCapture} onError={onError} processImage={processImage} />,
+    );
 
     selectFile(screen.getByTestId("capture-input"), imageFile("application/pdf"));
 
-    await waitFor(() => expect(screen.getByText(/doesn't look like an image/i)).toBeTruthy());
+    await waitFor(() =>
+      expect(onError).toHaveBeenCalledWith(expect.stringMatching(/doesn't look like an image/i)),
+    );
     expect(processImage).not.toHaveBeenCalled();
     expect(onCapture).not.toHaveBeenCalled();
   });
 
   it("leaves state unchanged when the picker is cancelled", () => {
     const onCapture = vi.fn();
+    const onError = vi.fn();
     const processImage = vi.fn();
-    render(<Capture onCapture={onCapture} processImage={processImage} />);
+    render(
+      <Capture onCapture={onCapture} onError={onError} processImage={processImage} />,
+    );
 
     selectFile(screen.getByTestId("capture-input"), null);
 
     expect(onCapture).not.toHaveBeenCalled();
     expect(processImage).not.toHaveBeenCalled();
-    expect(screen.queryByAltText("Captured preview")).toBeNull();
+    expect(onError).not.toHaveBeenCalled();
   });
 });

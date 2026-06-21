@@ -44,8 +44,7 @@ const PROMPT = `You are History Lens. Identify the single most prominent object 
 Return:
 - name: what the object is, in a few words.
 - confidence: 0 to 1, how sure you are. If the image is too blurry, empty, or ambiguous to identify any specific object, set confidence to 0 and name to "Unknown".
-- instantAnswer: ONE plain sentence saying what it is and why it exists.
-- storyCards: 3 to 5 short cards. Use headings like "What is it?", "Why does it exist?", "How has it changed?", "Interesting fact", and "Related". Each body is one to three readable sentences. Keep it accurate and concrete; do not invent specifics you are unsure of.`;
+- instantAnswer: ONE clear, plain sentence saying what it is and why it exists. Keep it concise and accurate; do not invent specifics you are unsure of.`;
 
 let cachedClient: OpenAI | null = null;
 
@@ -145,6 +144,7 @@ Rules:
 - If the chain is empty, start with "Why does this exist?" about the topic.
 - Each step must follow causally from the previous answer — keep moving toward ever more fundamental causes (mechanism → economics → society → science → physics), the way a curious child keeps asking "but why?".
 - Keep the answer to one or two plain sentences. Be accurate; do not invent specifics you are unsure of.
+- Answer directly and stand-alone: do NOT restate or echo the question inside the answer — the reader only sees the answer.
 - Do not repeat a question already in the chain.`;
 
 /**
@@ -280,11 +280,11 @@ export async function exploreTopic(
       {
         role: "system",
         content:
-          "You are History Lens. Explain what something is and why it exists, in the same layered format used for scanned objects.",
+          "You are History Lens. Explain what something is and why it exists, in the same concise format used for scanned objects.",
       },
       {
         role: "user",
-        content: `Explain: "${topic}".${lensLine}\n\nReturn: name (the subject, concise), confidence (use 1 unless the subject is genuinely unclear), instantAnswer (one sentence on what it is and why it exists), and 3–5 storyCards with headings like "What is it?", "Why does it exist?", "How has it changed?", "Interesting fact", "Related". Be accurate; do not invent specifics.\n\n${STYLE[mode]}`,
+        content: `Explain: "${topic}".${lensLine}\n\nReturn: name (the subject, concise), confidence (use 1 unless the subject is genuinely unclear), and instantAnswer (ONE clear, plain sentence on what it is and why it exists). Be accurate and concise; do not invent specifics.\n\n${STYLE[mode]}`,
       },
     ],
     "identify_result",

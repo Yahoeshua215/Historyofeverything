@@ -261,8 +261,8 @@ export default function Home() {
       {status === "result" && result && (
         <>
           <StoryResult result={result} />
-          <RabbitHoleCards onSelect={onRabbitHole} />
           <WhyEngine topic={result.name} mode={mode} />
+          <RabbitHoleCards onSelect={onRabbitHole} />
           <button
             type="button"
             style={resetButton}

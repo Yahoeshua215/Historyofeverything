@@ -11,11 +11,6 @@ const records: ScanRecord[] = [
     name: "Stop sign",
     confidence: 0.9,
     instantAnswer: "An octagonal red traffic sign.",
-    storyCards: [
-      { heading: "a", body: "b" },
-      { heading: "c", body: "d" },
-      { heading: "e", body: "f" },
-    ],
   },
   {
     id: "2",
@@ -24,11 +19,6 @@ const records: ScanRecord[] = [
     name: "Oak tree",
     confidence: 0.8,
     instantAnswer: "A big leafy tree.",
-    storyCards: [
-      { heading: "a", body: "b" },
-      { heading: "c", body: "d" },
-      { heading: "e", body: "f" },
-    ],
   },
 ];
 

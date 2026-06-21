@@ -14,46 +14,47 @@ const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
 const wrap: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 14,
-  borderTop: "1px solid var(--border)",
-  paddingTop: 22,
+  gap: 16,
 };
 
-const heading: CSSProperties = {
-  margin: 0,
-  fontSize: "0.78rem",
-  fontWeight: 700,
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
-  color: "var(--text-muted)",
-};
-
+// Each answer in the trail — presented large and clear. The question itself is
+// not shown (it's redundant with the answer); it's still tracked for the API so
+// the next step can dig one layer deeper.
 const stepStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 4,
-  borderLeft: "2.5px solid var(--accent)",
-  paddingLeft: 14,
+  borderLeft: "3px solid var(--accent)",
+  paddingLeft: 16,
 };
 
-const qStyle: CSSProperties = { margin: 0, fontWeight: 700, color: "var(--text)" };
-const aStyle: CSSProperties = { margin: 0, color: "var(--text-muted)", lineHeight: 1.5 };
+const aStyle: CSSProperties = {
+  margin: 0,
+  color: "var(--text)",
+  fontSize: "clamp(1.15rem, 4.5vw, 1.45rem)",
+  lineHeight: 1.45,
+};
 
+// The big, can't-miss CTA — the heart of the experience.
 const button: CSSProperties = {
-  alignSelf: "flex-start",
+  width: "100%",
   display: "inline-flex",
   alignItems: "center",
-  gap: 8,
-  background: "var(--accent-soft)",
-  color: "var(--accent-strong)",
-  border: "1px solid rgba(99, 102, 241, 0.35)",
-  borderRadius: 999,
-  padding: "11px 20px",
-  fontSize: "1rem",
-  fontWeight: 600,
+  justifyContent: "center",
+  gap: 10,
+  background: "var(--accent-gradient)",
+  color: "var(--accent-ink)",
+  border: "none",
+  borderRadius: "var(--radius)",
+  padding: "20px 28px",
+  fontSize: "1.3rem",
+  fontWeight: 700,
+  letterSpacing: "-0.01em",
+  boxShadow: "var(--shadow-accent)",
 };
 
-const depthStyle: CSSProperties = { fontSize: "0.78rem", color: "var(--text-muted)" };
+const depthStyle: CSSProperties = {
+  fontSize: "0.78rem",
+  color: "var(--text-muted)",
+  alignSelf: "center",
+};
 const errorStyle: CSSProperties = { margin: 0, color: "var(--danger)", fontSize: "0.9rem" };
 
 /**
@@ -99,11 +100,8 @@ export default function WhyEngine({
 
   return (
     <section style={wrap} aria-label="Why engine">
-      <h2 style={heading}>Keep asking why</h2>
-
       {chain.map((step, index) => (
         <div key={index} className="hl-fade-up" style={stepStyle}>
-          <p style={qStyle}>{step.question}</p>
           <p style={aStyle}>{step.answer}</p>
         </div>
       ))}
@@ -115,7 +113,11 @@ export default function WhyEngine({
         onClick={goDeeper}
         disabled={loading}
       >
-        {loading ? "Digging deeper…" : chain.length === 0 ? "🤔 Why?" : "Why?"}
+        {loading
+          ? "Digging deeper…"
+          : chain.length === 0
+            ? "🤔 Why does this exist?"
+            : "Ask why again"}
       </button>
 
       {chain.length > 0 && (

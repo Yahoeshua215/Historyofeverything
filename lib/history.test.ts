@@ -6,11 +6,6 @@ const result: IdentifyResult = {
   name: "Stop sign",
   confidence: 0.9,
   instantAnswer: "An octagonal red traffic sign.",
-  storyCards: [
-    { heading: "What is it?", body: "A traffic sign." },
-    { heading: "Why?", body: "Safety." },
-    { heading: "Fact", body: "Once yellow." },
-  ],
 };
 
 beforeEach(() => {
@@ -38,7 +33,7 @@ describe("history store", () => {
   it("returns the saved record from saveScan", () => {
     const saved = saveScan(result, "adult");
     expect(saved.name).toBe("Stop sign");
-    expect(saved.storyCards).toHaveLength(3);
+    expect(saved.instantAnswer).toBe("An octagonal red traffic sign.");
   });
 
   it("clears history", () => {

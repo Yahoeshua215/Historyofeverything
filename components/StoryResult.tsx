@@ -9,27 +9,24 @@ export const LOW_CONFIDENCE_THRESHOLD = 0.6;
 const wrap: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 20,
-};
-
-const layer1: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
+  gap: 14,
 };
 
 const nameStyle: CSSProperties = {
   margin: 0,
-  fontSize: "clamp(1.6rem, 6vw, 2.4rem)",
-  lineHeight: 1.1,
-  letterSpacing: "-0.01em",
+  fontSize: "clamp(1.8rem, 7vw, 2.6rem)",
+  lineHeight: 1.05,
+  letterSpacing: "-0.025em",
+  fontWeight: 700,
 };
 
-const instantStyle: CSSProperties = {
+// The single, simplified explanation — big and clear is the whole point.
+const answerStyle: CSSProperties = {
   margin: 0,
-  fontSize: "clamp(1rem, 4vw, 1.2rem)",
-  color: "var(--text-muted)",
+  fontSize: "clamp(1.25rem, 5vw, 1.7rem)",
+  color: "var(--text)",
   lineHeight: 1.4,
+  fontWeight: 500,
 };
 
 const hintStyle: CSSProperties = {
@@ -42,74 +39,28 @@ const hintStyle: CSSProperties = {
   alignSelf: "flex-start",
 };
 
-const cardsStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 14,
-};
-
-const cardStyle: CSSProperties = {
-  background: "var(--glass)",
-  border: "1px solid var(--glass-border)",
-  boxShadow: "var(--shadow)",
-  backdropFilter: "var(--glass-blur)",
-  WebkitBackdropFilter: "var(--glass-blur)",
-  borderRadius: "var(--radius)",
-  padding: 20,
-};
-
-const cardHeading: CSSProperties = {
-  margin: "0 0 6px",
-  fontSize: "0.74rem",
-  fontWeight: 700,
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
-  color: "var(--accent-strong)",
-};
-
-const cardBody: CSSProperties = {
-  margin: 0,
-  fontSize: "1rem",
-  lineHeight: 1.5,
-};
-
 /**
- * Layer 1 (instant answer) + Layer 2 (story cards) rendering of an IdentifyResult.
- * Pure presentational — props in, markup out; no data fetching (U4 / R3, R4).
+ * The result view: a single, concise answer presented large and clear (name +
+ * one-sentence explanation). Deliberately minimal — the focus is a quick answer
+ * and the big "Why?" CTA that follows. Pure presentational (U4 / R3, R4).
  */
 export default function StoryResult({ result }: { result: IdentifyResult }) {
-  const { name, instantAnswer, confidence, storyCards } = result;
-  const cards = storyCards.filter((card) => card.body.trim() !== "");
+  const { name, instantAnswer, confidence } = result;
   const lowConfidence = confidence < LOW_CONFIDENCE_THRESHOLD;
 
-  // Plain-text version of the story for read-aloud narration.
-  const narration = [name, instantAnswer, ...cards.map((c) => `${c.heading} ${c.body}`)].join(". ");
+  // Plain-text version for read-aloud narration.
+  const narration = [name, instantAnswer].join(". ");
 
   return (
-    <section style={wrap} aria-label="Identification result">
-      <div style={layer1} className="hl-pop">
-        <h1 style={nameStyle}>{name}</h1>
-        <p style={instantStyle}>{instantAnswer}</p>
-        {lowConfidence && (
-          <span style={hintStyle} data-testid="confidence-hint">
-            Not fully sure — this might not be exact
-          </span>
-        )}
-        <NarrateButton text={narration} />
-      </div>
-
-      <div style={cardsStyle}>
-        {cards.map((card, index) => (
-          <article
-            key={`${card.heading}-${index}`}
-            className="hl-fade-up"
-            style={{ ...cardStyle, animationDelay: `${index * 80}ms` }}
-          >
-            <h2 style={cardHeading}>{card.heading}</h2>
-            <p style={cardBody}>{card.body}</p>
-          </article>
-        ))}
-      </div>
+    <section style={wrap} aria-label="Identification result" className="hl-pop">
+      <h1 style={nameStyle}>{name}</h1>
+      <p style={answerStyle}>{instantAnswer}</p>
+      {lowConfidence && (
+        <span style={hintStyle} data-testid="confidence-hint">
+          Not fully sure — this might not be exact
+        </span>
+      )}
+      <NarrateButton text={narration} />
     </section>
   );
 }

@@ -35,11 +35,6 @@ const result = {
   name: "Stop sign",
   confidence: 0.95,
   instantAnswer: "An octagonal red sign requiring drivers to stop.",
-  storyCards: [
-    { heading: "What is it?", body: "A traffic sign." },
-    { heading: "Why?", body: "Right-of-way." },
-    { heading: "Fact", body: "Once yellow." },
-  ],
 };
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {

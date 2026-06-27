@@ -27,19 +27,40 @@ const stepStyle: CSSProperties = {
   scrollMarginTop: 20,
 };
 
-// The answer in front of you (the latest) is the biggest and boldest; each
-// earlier answer behind it shrinks and fades, giving the trail a sense of
-// depth so the current step is always the clear focus.
-function answerStyle(distanceFromLatest: number): CSSProperties {
-  const scale = Math.max(0.6, 1 - distanceFromLatest * 0.14);
-  const opacity = Math.max(0.4, 1 - distanceFromLatest * 0.16);
+// The focused answer sits in front — biggest, boldest, fully opaque. Every other
+// answer shrinks and fades with its distance from the focus, giving the trail a
+// sense of depth. Tapping any answer makes it the focus, carouseling it forward.
+const answerButton: CSSProperties = {
+  ...stepStyle,
+  paddingTop: 0,
+  paddingRight: 0,
+  paddingBottom: 0,
+  display: "block",
+  width: "100%",
+  textAlign: "left",
+  background: "none",
+  border: "none",
+  borderLeft: "3px solid var(--accent)",
+  color: "var(--text)",
+  cursor: "pointer",
+  transition: "opacity 0.35s ease",
+};
+
+function answerContainerStyle(distanceFromFocus: number): CSSProperties {
+  return {
+    ...answerButton,
+    opacity: Math.max(0.4, 1 - distanceFromFocus * 0.16),
+  };
+}
+
+function answerTextStyle(distanceFromFocus: number, focused: boolean): CSSProperties {
+  const scale = Math.max(0.6, 1 - distanceFromFocus * 0.14);
   return {
     margin: 0,
-    color: "var(--text)",
     fontSize: `calc(clamp(1.2rem, 4.8vw, 1.55rem) * ${scale})`,
     lineHeight: 1.4,
-    opacity,
-    transition: "font-size 0.35s ease, opacity 0.35s ease",
+    fontWeight: focused ? 600 : 400,
+    transition: "font-size 0.35s ease",
   };
 }
 
@@ -83,17 +104,22 @@ export default function WhyEngine({
   const [chain, setChain] = useState<WhyStep[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const latestRef = useRef<HTMLDivElement | null>(null);
+  // Which answer is carouseled to the front. `null` follows the latest answer;
+  // tapping an earlier answer pins the focus there until a new step is added.
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // As each new answer arrives, pull it to the top of the viewport so it's the
-  // focus — everything above scrolls out of view if needed.
+  const focused = focusedIndex === null ? chain.length - 1 : focusedIndex;
+
+  // Bring the focused answer to the top of the viewport — whether the focus moved
+  // because a new step arrived or because the user tapped an earlier answer.
   useEffect(() => {
     if (chain.length === 0) return;
-    const el = latestRef.current;
+    const el = itemRefs.current[focused];
     if (el && typeof el.scrollIntoView === "function") {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [chain.length]);
+  }, [focused, chain.length]);
 
   async function goDeeper() {
     setLoading(true);
@@ -113,6 +139,8 @@ export default function WhyEngine({
       }
       const step = (await res.json()) as WhyStep;
       setChain((prev) => [...prev, step]);
+      // A fresh answer always takes the front, even if an earlier one was pinned.
+      setFocusedIndex(null);
     } catch {
       setErrorMessage(ERROR_MESSAGES.network);
     } finally {
@@ -122,16 +150,26 @@ export default function WhyEngine({
 
   return (
     <section style={wrap} aria-label="Why engine">
-      {chain.map((step, index) => (
-        <div
-          key={index}
-          ref={index === chain.length - 1 ? latestRef : undefined}
-          className="hl-fade-up"
-          style={stepStyle}
-        >
-          <p style={answerStyle(chain.length - 1 - index)}>{step.answer}</p>
-        </div>
-      ))}
+      {chain.map((step, index) => {
+        const distance = Math.abs(index - focused);
+        const isFocused = index === focused;
+        return (
+          <button
+            key={index}
+            type="button"
+            ref={(el) => {
+              itemRefs.current[index] = el;
+            }}
+            className={index === chain.length - 1 ? "hl-fade-up" : undefined}
+            style={answerContainerStyle(distance)}
+            onClick={() => setFocusedIndex(index)}
+            aria-pressed={isFocused}
+            title={isFocused ? undefined : "Bring this answer to the front"}
+          >
+            <p style={answerTextStyle(distance, isFocused)}>{step.answer}</p>
+          </button>
+        );
+      })}
 
       <button
         type="button"

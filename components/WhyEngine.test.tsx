@@ -37,6 +37,35 @@ describe("WhyEngine", () => {
     expect(screen.getByTestId("why-depth").textContent).toContain("2");
   });
 
+  it("brings an earlier answer to the front when tapped", async () => {
+    const fetchMock = fetch as ReturnType<typeof vi.fn>;
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({ question: "Why does it exist?", answer: "For safety." }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ question: "Why is safety needed?", answer: "Cars are fast." }),
+      );
+
+    render(<WhyEngine topic="Stop sign" />);
+    fireEvent.click(screen.getByRole("button", { name: /why/i }));
+    await screen.findByText("For safety.");
+    fireEvent.click(screen.getByRole("button", { name: /why/i }));
+    await screen.findByText("Cars are fast.");
+
+    const earlier = screen.getByText("For safety.").closest("button")!;
+    const latest = screen.getByText("Cars are fast.").closest("button")!;
+
+    // The newest answer starts in front; tapping the earlier one carousels it up.
+    expect(latest.getAttribute("aria-pressed")).toBe("true");
+    expect(earlier.getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(earlier);
+
+    expect(earlier.getAttribute("aria-pressed")).toBe("true");
+    expect(latest.getAttribute("aria-pressed")).toBe("false");
+  });
+
   it("sends the topic and accumulated chain to /api/why", async () => {
     const fetchMock = fetch as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue(

@@ -27,12 +27,21 @@ const stepStyle: CSSProperties = {
   scrollMarginTop: 20,
 };
 
-const aStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--text)",
-  fontSize: "clamp(1.15rem, 4.5vw, 1.45rem)",
-  lineHeight: 1.45,
-};
+// The answer in front of you (the latest) is the biggest and boldest; each
+// earlier answer behind it shrinks and fades, giving the trail a sense of
+// depth so the current step is always the clear focus.
+function answerStyle(distanceFromLatest: number): CSSProperties {
+  const scale = Math.max(0.6, 1 - distanceFromLatest * 0.14);
+  const opacity = Math.max(0.4, 1 - distanceFromLatest * 0.16);
+  return {
+    margin: 0,
+    color: "var(--text)",
+    fontSize: `calc(clamp(1.2rem, 4.8vw, 1.55rem) * ${scale})`,
+    lineHeight: 1.4,
+    opacity,
+    transition: "font-size 0.35s ease, opacity 0.35s ease",
+  };
+}
 
 // The big, can't-miss CTA — the heart of the experience. Pink, on purpose.
 const button: CSSProperties = {
@@ -120,7 +129,7 @@ export default function WhyEngine({
           className="hl-fade-up"
           style={stepStyle}
         >
-          <p style={aStyle}>{step.answer}</p>
+          <p style={answerStyle(chain.length - 1 - index)}>{step.answer}</p>
         </div>
       ))}
 

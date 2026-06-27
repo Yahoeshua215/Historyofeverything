@@ -34,22 +34,22 @@ const aStyle: CSSProperties = {
   lineHeight: 1.45,
 };
 
-// The big, can't-miss CTA — the heart of the experience.
+// The big, can't-miss CTA — the heart of the experience. Pink, on purpose.
 const button: CSSProperties = {
   width: "100%",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   gap: 10,
-  background: "var(--accent-gradient)",
-  color: "var(--accent-ink)",
+  background: "linear-gradient(135deg, #ec4899 0%, #f472b6 55%, #f9a8d4 130%)",
+  color: "#ffffff",
   border: "none",
   borderRadius: "var(--radius)",
   padding: "20px 28px",
   fontSize: "1.3rem",
   fontWeight: 700,
   letterSpacing: "-0.01em",
-  boxShadow: "var(--shadow-accent)",
+  boxShadow: "0 12px 28px rgba(236, 72, 153, 0.32)",
 };
 
 const depthStyle: CSSProperties = {

@@ -5,10 +5,11 @@ import Capture from "@/components/Capture";
 import SearchBox from "@/components/SearchBox";
 import StoryResult from "@/components/StoryResult";
 import WhyEngine from "@/components/WhyEngine";
-import ModeToggle from "@/components/ModeToggle";
 import HistoryView from "@/components/HistoryView";
 import DailyCards from "@/components/DailyCards";
 import RabbitHoleCards from "@/components/RabbitHoleCards";
+import BottomNav from "@/components/BottomNav";
+import Sheet from "@/components/Sheet";
 import type { CapturedImage } from "@/lib/image";
 import type { Category } from "@/lib/categories";
 import {
@@ -26,7 +27,7 @@ import type {
 } from "@/lib/types";
 
 type Status = "idle" | "loading" | "result" | "error";
-type View = "scan" | "history";
+type SheetName = "search" | "lens" | "history";
 
 // Map the route's typed error kinds (plus a client-side network failure) to distinct,
 // friendly, retry-able messages (R5).
@@ -38,18 +39,21 @@ const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
   network: "Network problem — check your connection and try again.",
 };
 
+// The page is a full-height column: a scrolling stage for the answers, with the
+// fixed BottomNav floating over its lower edge (hence the generous bottom pad).
 const main: CSSProperties = {
   maxWidth: 660,
   margin: "0 auto",
-  padding: "40px 20px 72px",
+  padding: "20px 20px 104px",
   display: "flex",
   flexDirection: "column",
-  gap: 26,
+  gap: 22,
   minHeight: "100dvh",
 };
 
 // Small persistent brand/home link, shown once you've left the landing.
 const wordmark: CSSProperties = {
+  alignSelf: "flex-start",
   background: "none",
   border: "none",
   padding: 0,
@@ -65,7 +69,7 @@ const hero: CSSProperties = {
   alignItems: "center",
   textAlign: "center",
   gap: 12,
-  padding: "28px 0 8px",
+  padding: "36px 0 8px",
 };
 const heroTitle: CSSProperties = {
   margin: 0,
@@ -81,47 +85,32 @@ const heroDesc: CSSProperties = {
   lineHeight: 1.5,
   maxWidth: 420,
 };
-
-const controls: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: 12,
-  flexWrap: "wrap",
+const heroHint: CSSProperties = {
+  margin: "4px 0 0",
+  color: "var(--text-muted)",
+  fontSize: "0.9rem",
 };
 
-const controlsRight: CSSProperties = {
+// The answers are the star — give them room to breathe and fill the stage.
+const stage: CSSProperties = {
+  flex: 1,
   display: "flex",
-  alignItems: "center",
-  justifyContent: "flex-end",
-  gap: 10,
-  flexWrap: "wrap",
-};
-
-const historyButton: CSSProperties = {
-  background: "var(--glass)",
-  color: "var(--text)",
-  border: "1px solid var(--glass-border)",
-  boxShadow: "var(--shadow-soft)",
-  backdropFilter: "var(--glass-blur)",
-  WebkitBackdropFilter: "var(--glass-blur)",
-  borderRadius: 999,
-  padding: "8px 16px",
-  fontSize: "0.85rem",
-  fontWeight: 600,
+  flexDirection: "column",
+  gap: 24,
 };
 
 const statusBlock: CSSProperties = {
+  flex: 1,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
+  justifyContent: "center",
   gap: 12,
   padding: "44px 0",
   color: "var(--text-muted)",
 };
 
-const resetButton: CSSProperties = {
-  alignSelf: "flex-start",
+const retryButton: CSSProperties = {
   background: "var(--glass)",
   color: "var(--text)",
   border: "1px solid var(--glass-border)",
@@ -136,32 +125,22 @@ const resetButton: CSSProperties = {
 
 const errorText: CSSProperties = { margin: 0, color: "var(--danger)", textAlign: "center" };
 
-// "Ask the next question" — small image + text CTAs kept on the result page so
-// the user can pose a new query without going back to the start.
-const nextQuery: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 10,
-  borderTop: "1px solid var(--border)",
-  paddingTop: 20,
-};
-
-const nextQueryHeading: CSSProperties = {
+const lensHint: CSSProperties = {
   margin: 0,
-  fontSize: "0.78rem",
-  fontWeight: 700,
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
   color: "var(--text-muted)",
+  fontSize: "0.95rem",
+  lineHeight: 1.5,
+  padding: "8px 0 4px",
 };
 
 export default function Home() {
   const [status, setStatus] = useState<Status>("idle");
-  const [view, setView] = useState<View>("scan");
   const [result, setResult] = useState<IdentifyResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("adult");
   const [history, setHistory] = useState<ScanRecord[]>([]);
+  // Which bottom-sheet (if any) is open over the page.
+  const [sheet, setSheet] = useState<SheetName | null>(null);
   // The stable thing being explored, plus which lens (if any) is currently
   // applied to it — so the lens bar acts like a filter on one subject.
   const [subject, setSubject] = useState<string | null>(null);
@@ -184,6 +163,7 @@ export default function Home() {
     setErrorMessage(null);
     setSubject(null);
     setActiveLens(null);
+    setSheet(null);
   }
 
   function fail(kind: IdentifyErrorKind | "network") {
@@ -202,7 +182,7 @@ export default function Home() {
     setSubject(record.name);
     setActiveLens(null);
     setStatus("result");
-    setView("scan");
+    setSheet(null);
   }
 
   function handleClearHistory() {
@@ -211,6 +191,7 @@ export default function Home() {
   }
 
   async function identify(image: CapturedImage) {
+    setSheet(null);
     setStatus("loading");
     setErrorMessage(null);
     try {
@@ -243,6 +224,7 @@ export default function Home() {
 
   // Build a story from a text topic — powers daily cards and rabbit-hole lenses.
   async function explore(topic: string, lens?: string) {
+    setSheet(null);
     setStatus("loading");
     setErrorMessage(null);
     try {
@@ -290,25 +272,10 @@ export default function Home() {
     explore(subject, category.key);
   }
 
-  if (view === "history") {
-    return (
-      <main style={main}>
-        <HistoryView
-          records={history}
-          onSelect={openRecord}
-          onClear={handleClearHistory}
-          onBack={() => setView("scan")}
-        />
-      </main>
-    );
-  }
-
   return (
-    <main style={main}>
-      <div style={controls}>
-        {status === "idle" ? (
-          <span aria-hidden />
-        ) : (
+    <>
+      <main style={main}>
+        {status !== "idle" && (
           <button
             type="button"
             style={wordmark}
@@ -318,91 +285,101 @@ export default function Home() {
             Everywhy
           </button>
         )}
-        <div style={controlsRight}>
-          <ModeToggle mode={mode} onChange={changeMode} />
-          <Capture onCapture={identify} onError={captureError} />
-          <button
-            type="button"
-            style={historyButton}
-            className="hl-interactive"
-            onClick={() => setView("history")}
-          >
-            🕘 History{history.length > 0 ? ` (${history.length})` : ""}
-          </button>
-        </div>
-      </div>
 
-      {status === "idle" && (
-        <>
-          <section style={hero}>
-            <h1 style={heroTitle} className="hl-gradient-text">Everywhy</h1>
-            <p style={heroDesc}>Capture the Why behind everything.</p>
-          </section>
-          <SearchBox onSearch={onSearch} />
-          <DailyCards mode={mode} onSelect={onDailySelect} />
-        </>
-      )}
+        {status === "idle" && (
+          <div style={stage}>
+            <section style={hero}>
+              <h1 style={heroTitle} className="hl-gradient-text">Everywhy</h1>
+              <p style={heroDesc}>Capture the Why behind everything.</p>
+              <p style={heroHint}>Search or scan below to begin — or tap a card.</p>
+            </section>
+            <DailyCards mode={mode} onSelect={onDailySelect} />
+          </div>
+        )}
 
-      {status === "loading" && (
-        <>
-          {/* Keep the lens filter visible while a lens switch reloads. */}
-          {subject && (
-            <RabbitHoleCards active={activeLens} onSelect={onRabbitHole} disabled />
-          )}
+        {status === "loading" && (
           <div style={statusBlock} role="status" aria-live="polite">
             <span style={{ fontSize: "2rem" }}>🔍</span>
             <span>Looking it up…</span>
           </div>
-        </>
-      )}
+        )}
 
-      {status === "result" && result && (
-        <>
-          <RabbitHoleCards active={activeLens} onSelect={onRabbitHole} />
-          <StoryResult result={result} />
-          <WhyEngine
-            key={`${result.name}:${activeLens ?? ""}`}
-            topic={result.name}
-            mode={mode}
-          />
-
-          <section style={nextQuery} aria-label="Ask the next question">
-            <h2 style={nextQueryHeading}>Ask the next question</h2>
-            <SearchBox
-              compact
-              placeholder="Type a topic…"
-              onSearch={onSearch}
-              trailing={
-                <Capture compact onCapture={identify} onError={captureError} />
-              }
+        {status === "result" && result && (
+          <div style={stage}>
+            <StoryResult result={result} />
+            <WhyEngine
+              key={`${result.name}:${activeLens ?? ""}`}
+              topic={result.name}
+              mode={mode}
             />
-          </section>
+          </div>
+        )}
 
-          <button
-            type="button"
-            style={resetButton}
-            className="hl-interactive"
-            onClick={reset}
-          >
-            ← Start over
-          </button>
-        </>
+        {status === "error" && (
+          <div style={statusBlock} role="alert">
+            <span style={{ fontSize: "2rem" }}>😕</span>
+            <p style={errorText}>{errorMessage}</p>
+            <button
+              type="button"
+              style={retryButton}
+              className="hl-interactive"
+              onClick={reset}
+            >
+              Try again
+            </button>
+          </div>
+        )}
+      </main>
+
+      <BottomNav
+        onSearch={() => setSheet("search")}
+        onLenses={() => setSheet("lens")}
+        onHistory={() => setSheet("history")}
+        historyCount={history.length}
+        lensActive={activeLens !== null}
+        lensesEnabled={Boolean(subject)}
+        mode={mode}
+        onToggleMode={() => changeMode(mode === "adult" ? "kid" : "adult")}
+        onCapture={identify}
+        onCaptureError={captureError}
+        openSheet={sheet}
+      />
+
+      {sheet === "search" && (
+        <Sheet title="Search anything" onClose={() => setSheet(null)}>
+          <SearchBox
+            onSearch={onSearch}
+            trailing={
+              <Capture compact onCapture={identify} onError={captureError} />
+            }
+          />
+        </Sheet>
       )}
 
-      {status === "error" && (
-        <div style={statusBlock} role="alert">
-          <span style={{ fontSize: "2rem" }}>😕</span>
-          <p style={errorText}>{errorMessage}</p>
-          <button
-            type="button"
-            style={resetButton}
-            className="hl-interactive"
-            onClick={reset}
-          >
-            Try again
-          </button>
-        </div>
+      {sheet === "lens" && (
+        <Sheet title="See it through a lens" onClose={() => setSheet(null)}>
+          {subject ? (
+            <RabbitHoleCards active={activeLens} onSelect={onRabbitHole} />
+          ) : (
+            <p style={lensHint}>
+              Scan or search something first, then revisit it through a lens —
+              history, science, people, and more.
+            </p>
+          )}
+        </Sheet>
       )}
-    </main>
+
+      {sheet === "history" && (
+        <Sheet title="History" onClose={() => setSheet(null)}>
+          <HistoryView
+            embedded
+            records={history}
+            onSelect={openRecord}
+            onClear={handleClearHistory}
+            onBack={() => setSheet(null)}
+          />
+        </Sheet>
+      )}
+    </>
   );
 }

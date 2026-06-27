@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 // Stub Capture: a button that hands a fixed CapturedImage to the page (the real
 // canvas downscale isn't exercisable in happy-dom — that path is tested in U3).
+// Renders regardless of variant, so it stands in for the bottom-nav scan tab and
+// the search sheet's image button alike.
 vi.mock("@/components/Capture", () => ({
   default: ({ onCapture }: { onCapture: (img: unknown) => void }) => (
     <button
@@ -45,6 +47,11 @@ function jsonResponse(body: unknown, ok = true, status = 200): Response {
   } as Response;
 }
 
+// The scan tab lives in the bottom nav; grab the first stubbed capture button.
+function scanTab(): HTMLElement {
+  return screen.getAllByText("scan-stub")[0];
+}
+
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
   window.localStorage.clear();
@@ -64,7 +71,7 @@ describe("Home flow", () => {
     );
 
     render(<Home />);
-    fireEvent.click(screen.getByText("scan-stub"));
+    fireEvent.click(scanTab());
 
     // Loading state is shown while the request is in flight.
     expect(await screen.findByRole("status")).toBeTruthy();
@@ -73,7 +80,8 @@ describe("Home flow", () => {
 
     expect(await screen.findByText("Stop sign")).toBeTruthy();
     expect(screen.getByText("An octagonal red sign requiring drivers to stop.")).toBeTruthy();
-    expect(screen.getByText("← Start over")).toBeTruthy();
+    // Reset is now the persistent wordmark.
+    expect(screen.getByRole("button", { name: "Everywhy" })).toBeTruthy();
   });
 
   it("shows a friendly message (not a crash) on a refusal (R5)", async () => {
@@ -82,7 +90,7 @@ describe("Home flow", () => {
     );
 
     render(<Home />);
-    fireEvent.click(screen.getByText("scan-stub"));
+    fireEvent.click(scanTab());
 
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByText(/couldn't analyse that image/i)).toBeTruthy();
@@ -93,22 +101,23 @@ describe("Home flow", () => {
     (fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("offline"));
 
     render(<Home />);
-    fireEvent.click(screen.getByText("scan-stub"));
+    fireEvent.click(scanTab());
 
     expect(await screen.findByText(/network problem/i)).toBeTruthy();
     expect(screen.getByText("Try again")).toBeTruthy();
   });
 
-  it("'Scan again' returns to idle and clears the previous result", async () => {
+  it("the wordmark returns to idle and clears the previous result", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(result));
 
     render(<Home />);
-    fireEvent.click(screen.getByText("scan-stub"));
+    fireEvent.click(scanTab());
 
     await screen.findByText("Stop sign");
-    fireEvent.click(screen.getByText("← Start over"));
+    fireEvent.click(screen.getByRole("button", { name: "Everywhy" }));
 
-    await waitFor(() => expect(screen.getByText("scan-stub")).toBeTruthy());
+    // Back on the landing: the daily suggestions are shown and the result is gone.
+    await waitFor(() => expect(screen.getByText("daily-stub")).toBeTruthy());
     expect(screen.queryByText("Stop sign")).toBeNull();
   });
 
@@ -117,30 +126,33 @@ describe("Home flow", () => {
     fetchMock.mockResolvedValue(jsonResponse(result));
 
     render(<Home />);
-    fireEvent.click(screen.getByRole("button", { name: "Kid" }));
-    fireEvent.click(screen.getByText("scan-stub"));
+    // The mode tab toggles adult ⇄ kid; one tap switches to Kid.
+    fireEvent.click(screen.getByRole("button", { name: /adult/i }));
+    fireEvent.click(scanTab());
 
     await screen.findByText("Stop sign");
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.mode).toBe("kid");
   });
 
-  it("saves a scan to history and can re-open it", async () => {
+  it("saves a scan to history and can re-open it from the history sheet", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(result));
 
     render(<Home />);
-    fireEvent.click(screen.getByText("scan-stub"));
+    fireEvent.click(scanTab());
     await screen.findByText("Stop sign");
 
-    // History button shows the count; reset away from the result, then open it.
+    // The history tab shows the count; reset away from the result, then open it.
     expect(await screen.findByRole("button", { name: /history \(1\)/i })).toBeTruthy();
-    fireEvent.click(screen.getByText("← Start over"));
+    fireEvent.click(screen.getByRole("button", { name: "Everywhy" }));
     fireEvent.click(await screen.findByRole("button", { name: /history \(1\)/i }));
 
-    // The saved record is listed; selecting it re-opens the story.
+    // The saved record is listed in the sheet; selecting it re-opens the story.
     expect(await screen.findByText("Stop sign")).toBeTruthy();
     fireEvent.click(screen.getByText("Stop sign"));
-    expect(await screen.findByText("← Start over")).toBeTruthy();
+    expect(
+      await screen.findByText("An octagonal red sign requiring drivers to stop."),
+    ).toBeTruthy();
   });
 
   it("a text search explores the typed term via /api/explore", async () => {
@@ -148,6 +160,8 @@ describe("Home flow", () => {
     fetchMock.mockResolvedValue(jsonResponse({ ...result, name: "Printing press" }));
 
     render(<Home />);
+    // Open the search sheet from the bottom nav, then type a query.
+    fireEvent.click(screen.getByRole("button", { name: /search/i }));
     fireEvent.change(screen.getByLabelText(/search any topic/i), {
       target: { value: "printing press" },
     });
@@ -172,32 +186,33 @@ describe("Home flow", () => {
     expect(JSON.parse(call![1].body)).toMatchObject({ topic: "Apollo 11", lens: "history" });
   });
 
-  it("keeps next-question image + text CTAs on the result page", async () => {
+  it("the search sheet offers both a text field and an image control", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(result));
 
     render(<Home />);
-    fireEvent.click(screen.getByText("scan-stub"));
+    fireEvent.click(scanTab());
     await screen.findByText("Stop sign");
 
-    // The "Ask the next question" section is present...
-    expect(screen.getByRole("region", { name: /ask the next question/i })).toBeTruthy();
-    // ...with a text field and an image control (header + next-question stubs).
+    // Open the search sheet — it pairs a search field with an image button.
+    fireEvent.click(screen.getByRole("button", { name: /search/i }));
+    expect(screen.getByRole("dialog", { name: /search anything/i })).toBeTruthy();
     expect(screen.getByLabelText(/search any topic/i)).toBeTruthy();
     expect(screen.getAllByText("scan-stub").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("the next-question search explores a new topic from the result page", async () => {
+  it("the search sheet explores a new topic from the result page", async () => {
     const fetchMock = fetch as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue(jsonResponse(result));
 
     render(<Home />);
-    fireEvent.click(screen.getByText("scan-stub"));
+    fireEvent.click(scanTab());
     await screen.findByText("Stop sign");
 
+    fireEvent.click(screen.getByRole("button", { name: /search/i }));
     fireEvent.change(screen.getByLabelText(/search any topic/i), {
       target: { value: "jet engine" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /^go$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /explore/i }));
 
     await waitFor(() => {
       const call = fetchMock.mock.calls.find((c) => c[0] === "/api/explore");
@@ -206,14 +221,16 @@ describe("Home flow", () => {
     });
   });
 
-  it("a rabbit-hole card explores the current subject through that lens", async () => {
+  it("a lens from the lens sheet explores the current subject through that lens", async () => {
     const fetchMock = fetch as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue(jsonResponse(result));
 
     render(<Home />);
-    fireEvent.click(screen.getByText("scan-stub"));
+    fireEvent.click(scanTab());
     await screen.findByText("Stop sign");
 
+    // Open the lens sheet, then pick a lens.
+    fireEvent.click(screen.getByRole("button", { name: /^lens$/i }));
     fireEvent.click(screen.getByRole("button", { name: /economics/i }));
 
     await waitFor(() =>

@@ -9,6 +9,8 @@ interface CaptureProps {
   onError?: (message: string) => void;
   /** Icon-only variant for inline "next question" controls. */
   compact?: boolean;
+  /** Bottom-nav variant: a transparent icon-over-label tab. */
+  nav?: boolean;
   /**
    * Image processor seam — defaults to the real canvas downscale. Tests inject a
    * fake so they don't depend on a real canvas/decoder.
@@ -40,6 +42,21 @@ const compactButton: CSSProperties = {
   fontSize: "1.1rem",
 };
 
+// Bottom-nav tab: transparent, icon stacked over a tiny label (matches BottomNav).
+const navButton: CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 3,
+  background: "none",
+  border: "none",
+  padding: "6px 4px",
+  color: "var(--text-muted)",
+  fontSize: "0.62rem",
+  fontWeight: 600,
+};
+
 /**
  * Camera / file capture (U3 / R1), as a compact header trigger. On mobile the
  * input offers camera + library; on desktop a file picker. The chosen image is
@@ -50,6 +67,7 @@ export default function Capture({
   onCapture,
   onError,
   compact = false,
+  nav = false,
   processImage = downscaleToJpeg,
 }: CaptureProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -92,16 +110,32 @@ export default function Capture({
         hidden
         data-testid="capture-input"
       />
-      <button
-        type="button"
-        style={compact ? compactButton : button}
-        className="hl-interactive"
-        onClick={openPicker}
-        disabled={processing}
-        aria-label={compact ? "Scan an image" : undefined}
-      >
-        {compact ? (processing ? "…" : "📷") : processing ? "Reading…" : "📷 Image"}
-      </button>
+      {nav ? (
+        <button
+          type="button"
+          style={navButton}
+          className="hl-interactive"
+          onClick={openPicker}
+          disabled={processing}
+          aria-label="Scan an image"
+        >
+          <span aria-hidden style={{ fontSize: "1.35rem", lineHeight: 1 }}>
+            {processing ? "…" : "📷"}
+          </span>
+          <span>Scan</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          style={compact ? compactButton : button}
+          className="hl-interactive"
+          onClick={openPicker}
+          disabled={processing}
+          aria-label={compact ? "Scan an image" : undefined}
+        >
+          {compact ? (processing ? "…" : "📷") : processing ? "Reading…" : "📷 Image"}
+        </button>
+      )}
     </>
   );
 }

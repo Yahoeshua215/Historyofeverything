@@ -71,33 +71,49 @@ function formatWhen(ms: number): string {
   }
 }
 
-/** Browse past scans; tap one to re-open it. */
+/**
+ * Browse past scans; tap one to re-open it. When `embedded` (e.g. inside a
+ * bottom sheet that already supplies a title and close affordance) the internal
+ * back button and heading are dropped, leaving just the Clear action.
+ */
 export default function HistoryView({
   records,
   onSelect,
   onClear,
   onBack,
+  embedded = false,
 }: {
   records: ScanRecord[];
   onSelect: (record: ScanRecord) => void;
   onClear: () => void;
   onBack: () => void;
+  embedded?: boolean;
 }) {
   return (
     <section style={wrap} aria-label="Scan history">
-      <div style={topRow}>
-        <button type="button" style={pillButton} className="hl-interactive" onClick={onBack}>
-          ← Back
-        </button>
-        <strong>History</strong>
-        {records.length > 0 ? (
-          <button type="button" style={clearButton} className="hl-interactive" onClick={onClear}>
-            Clear
+      {embedded ? (
+        records.length > 0 && (
+          <div style={{ ...topRow, justifyContent: "flex-end" }}>
+            <button type="button" style={clearButton} className="hl-interactive" onClick={onClear}>
+              Clear
+            </button>
+          </div>
+        )
+      ) : (
+        <div style={topRow}>
+          <button type="button" style={pillButton} className="hl-interactive" onClick={onBack}>
+            ← Back
           </button>
-        ) : (
-          <span style={{ width: 64 }} aria-hidden />
-        )}
-      </div>
+          <strong>History</strong>
+          {records.length > 0 ? (
+            <button type="button" style={clearButton} className="hl-interactive" onClick={onClear}>
+              Clear
+            </button>
+          ) : (
+            <span style={{ width: 64 }} aria-hidden />
+          )}
+        </div>
+      )}
 
       {records.length === 0 ? (
         <p style={empty}>No scans yet. Scan something to start your history.</p>

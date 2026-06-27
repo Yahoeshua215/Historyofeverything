@@ -14,11 +14,16 @@ const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
 const wrap: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 12,
+  // No flex gap — cards overlap via negative margins (see answerCardStyle) so
+  // the front one sits on top of the receding stack.
+  gap: 0,
   // A shared 3D scene so the cards can stand up and tilt back into the distance.
   perspective: "1100px",
   perspectiveOrigin: "50% 35%",
 };
+
+// How much each card tucks under the one in front of it.
+const CARD_OVERLAP = 26;
 
 // Each answer sits on its own frosted-glass card that stands upright in a 3D
 // scene. The focused card faces you flat and in front; every card behind it
@@ -46,7 +51,11 @@ const cardBase: CSSProperties = {
 // Clamp depth so a long trail doesn't fade or tilt into nothing.
 const MAX_DEPTH = 4;
 
-function answerCardStyle(distanceFromFocus: number, focused: boolean): CSSProperties {
+function answerCardStyle(
+  distanceFromFocus: number,
+  focused: boolean,
+  isLast: boolean,
+): CSSProperties {
   const t = Math.min(distanceFromFocus, MAX_DEPTH);
   // Stand the focused card flat in front; lean each one behind it further back.
   const transform = focused
@@ -55,15 +64,23 @@ function answerCardStyle(distanceFromFocus: number, focused: boolean): CSSProper
   return {
     ...cardBase,
     transform,
+    // Positioned + layered so the focused card always sits on top of the stack.
+    position: "relative",
+    zIndex: 50 - t,
+    // Overlap the next card down (the last card keeps its base so the CTA below
+    // it stays clear).
+    marginBottom: isLast ? 0 : -CARD_OVERLAP,
     background: focused ? "var(--glass-strong)" : "var(--glass)",
     border: focused ? "1px solid var(--accent)" : "1px solid var(--glass-border)",
+    // Deep, layered drop shadows so each standing card casts onto the one behind
+    // it — the focused card lifts hardest off the stack.
     boxShadow: focused
-      ? "0 18px 40px rgba(30, 41, 80, 0.20)"
-      : "0 10px 22px rgba(30, 41, 80, 0.12)",
-    opacity: Math.max(0.45, 1 - t * 0.14),
+      ? "0 28px 50px rgba(18, 26, 58, 0.32), 0 8px 18px rgba(18, 26, 58, 0.20)"
+      : "0 20px 38px rgba(18, 26, 58, 0.26)",
+    opacity: Math.max(0.5, 1 - t * 0.12),
     padding: `${Math.max(14, 22 - t * 1.5)}px ${Math.max(16, 24 - t * 1.5)}px`,
     transition:
-      "transform 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.45s cubic-bezier(0.22,1,0.36,1), padding 0.45s ease, box-shadow 0.45s ease, background 0.45s ease, border-color 0.45s ease",
+      "transform 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.45s cubic-bezier(0.22,1,0.36,1), margin 0.45s ease, padding 0.45s ease, box-shadow 0.45s ease, background 0.45s ease, border-color 0.45s ease",
     transitionDelay: `${t * 60}ms`,
   };
 }
@@ -83,12 +100,14 @@ function answerTextStyle(distanceFromFocus: number, focused: boolean): CSSProper
 }
 
 // The big, can't-miss CTA — the heart of the experience. Pink, on purpose.
+// (The trail uses gap:0 for overlap, so the CTA carries its own top margin.)
 const button: CSSProperties = {
   width: "100%",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   gap: 10,
+  marginTop: 20,
   background: "linear-gradient(135deg, #ec4899 0%, #f472b6 55%, #f9a8d4 130%)",
   color: "#ffffff",
   border: "none",
@@ -104,8 +123,13 @@ const depthStyle: CSSProperties = {
   fontSize: "0.78rem",
   color: "var(--text-muted)",
   alignSelf: "center",
+  marginTop: 12,
 };
-const errorStyle: CSSProperties = { margin: 0, color: "var(--danger)", fontSize: "0.9rem" };
+const errorStyle: CSSProperties = {
+  margin: "12px 0 0",
+  color: "var(--danger)",
+  fontSize: "0.9rem",
+};
 
 /**
  * The Why Engine (curiosity component). Seeded with the identified object, it lets
@@ -179,7 +203,7 @@ export default function WhyEngine({
               itemRefs.current[index] = el;
             }}
             className={index === chain.length - 1 ? "hl-fade-up" : undefined}
-            style={answerCardStyle(distance, isFocused)}
+            style={answerCardStyle(distance, isFocused, index === chain.length - 1)}
             onClick={() => setFocusedIndex(index)}
             aria-pressed={isFocused}
             title={isFocused ? undefined : "Bring this answer to the front"}

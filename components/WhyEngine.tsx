@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import type { IdentifyErrorKind, Mode, WhyStep } from "@/lib/types";
 
 const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
@@ -14,16 +20,29 @@ const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
 const wrap: CSSProperties = {
   display: "flex",
   flexDirection: "column",
+  gap: 20,
+};
+
+// The card stack is its own 3D scene and the drag surface: dragging vertically
+// over it spins the rolodex (changes which card is in front).
+const stack: CSSProperties = {
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
   // No flex gap — cards overlap via negative margins (see answerCardStyle) so
   // the front one sits on top of the receding stack.
   gap: 0,
-  // A shared 3D scene so the cards can stand up and tilt back into the distance.
   perspective: "1100px",
   perspectiveOrigin: "50% 35%",
+  // Own vertical gestures so a drag spins the cards instead of scrolling the page.
+  touchAction: "pan-y",
 };
 
 // How much each card tucks under the one in front of it.
 const CARD_OVERLAP = 26;
+
+// Pixels of vertical drag that advance the rolodex by one card.
+const DRAG_STEP = 46;
 
 // Each answer sits on its own frosted-glass card that stands upright in a 3D
 // scene. The focused card faces you flat and in front; every card behind it
@@ -71,13 +90,18 @@ function answerCardStyle(
     // it stays clear).
     marginBottom: isLast ? 0 : -CARD_OVERLAP,
     background: focused ? "var(--glass-strong)" : "var(--glass)",
-    border: focused ? "1px solid var(--accent)" : "1px solid var(--glass-border)",
+    // Focused card gets the accent edge; receding cards get a defined outline so
+    // each one reads as a distinct card in the stack.
+    border: focused
+      ? "1px solid var(--accent)"
+      : "1px solid rgba(70, 80, 112, 0.22)",
     // Deep, layered drop shadows so each standing card casts onto the one behind
     // it — the focused card lifts hardest off the stack.
     boxShadow: focused
       ? "0 28px 50px rgba(18, 26, 58, 0.32), 0 8px 18px rgba(18, 26, 58, 0.20)"
       : "0 20px 38px rgba(18, 26, 58, 0.26)",
-    opacity: Math.max(0.5, 1 - t * 0.12),
+    // Front card stays crisp; the ones behind fade back a little more with depth.
+    opacity: focused ? 1 : Math.max(0.38, 1 - t * 0.18),
     padding: `${Math.max(14, 22 - t * 1.5)}px ${Math.max(16, 24 - t * 1.5)}px`,
     transition:
       "transform 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.45s cubic-bezier(0.22,1,0.36,1), margin 0.45s ease, padding 0.45s ease, box-shadow 0.45s ease, background 0.45s ease, border-color 0.45s ease",
@@ -149,19 +173,57 @@ export default function WhyEngine({
   // Which answer is carouseled to the front. `null` follows the latest answer;
   // tapping an earlier answer pins the focus there until a new step is added.
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [grabbing, setGrabbing] = useState(false);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  // Rolodex drag bookkeeping.
+  const dragging = useRef(false);
+  const dragStartY = useRef(0);
+  const dragStartFocus = useRef(0);
+  const dragMoved = useRef(false);
 
   const focused = focusedIndex === null ? chain.length - 1 : focusedIndex;
 
-  // Bring the focused answer to the top of the viewport — whether the focus moved
-  // because a new step arrived or because the user tapped an earlier answer.
+  // Bring the focused answer to the top of the viewport when the focus moves on
+  // its own (a new step arrives or an answer is tapped). Skipped mid-drag so the
+  // rolodex spins smoothly without the page fighting the gesture.
   useEffect(() => {
-    if (chain.length === 0) return;
+    if (chain.length === 0 || dragging.current) return;
     const el = itemRefs.current[focused];
     if (el && typeof el.scrollIntoView === "function") {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [focused, chain.length]);
+
+  // ── Rolodex: drag vertically over the stack to spin through the cards ──
+  function clampFocus(n: number) {
+    return Math.max(0, Math.min(chain.length - 1, n));
+  }
+
+  function onStackPointerDown(e: ReactPointerEvent) {
+    if (chain.length < 2) return; // nothing to spin through
+    dragging.current = true;
+    dragMoved.current = false;
+    dragStartY.current = e.clientY;
+    dragStartFocus.current = focused;
+    setGrabbing(true);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+
+  function onStackPointerMove(e: ReactPointerEvent) {
+    if (!dragging.current) return;
+    const delta = e.clientY - dragStartY.current;
+    if (Math.abs(delta) > 5) dragMoved.current = true;
+    // Drag down → pull the older cards (above) forward; drag up → toward newest.
+    const steps = Math.round(delta / DRAG_STEP);
+    const next = clampFocus(dragStartFocus.current - steps);
+    if (next !== focused) setFocusedIndex(next);
+  }
+
+  function endStackDrag() {
+    if (!dragging.current) return;
+    dragging.current = false;
+    setGrabbing(false);
+  }
 
   async function goDeeper() {
     setLoading(true);
@@ -192,26 +254,44 @@ export default function WhyEngine({
 
   return (
     <section style={wrap} aria-label="Why engine">
-      {chain.map((step, index) => {
-        const distance = Math.abs(index - focused);
-        const isFocused = index === focused;
-        return (
-          <button
-            key={index}
-            type="button"
-            ref={(el) => {
-              itemRefs.current[index] = el;
-            }}
-            className={index === chain.length - 1 ? "hl-fade-up" : undefined}
-            style={answerCardStyle(distance, isFocused, index === chain.length - 1)}
-            onClick={() => setFocusedIndex(index)}
-            aria-pressed={isFocused}
-            title={isFocused ? undefined : "Bring this answer to the front"}
-          >
-            <p style={answerTextStyle(distance, isFocused)}>{step.answer}</p>
-          </button>
-        );
-      })}
+      {chain.length > 0 && (
+        <div
+          style={{ ...stack, cursor: grabbing ? "grabbing" : "grab" }}
+          onPointerDown={onStackPointerDown}
+          onPointerMove={onStackPointerMove}
+          onPointerUp={endStackDrag}
+          onPointerCancel={endStackDrag}
+        >
+          {chain.map((step, index) => {
+            const distance = Math.abs(index - focused);
+            const isFocused = index === focused;
+            return (
+              <button
+                key={index}
+                type="button"
+                ref={(el) => {
+                  itemRefs.current[index] = el;
+                }}
+                className={index === chain.length - 1 ? "hl-fade-up" : undefined}
+                style={answerCardStyle(distance, isFocused, index === chain.length - 1)}
+                onClick={() => {
+                  // Ignore the click that ends a drag — only treat a real tap as
+                  // a "bring to front".
+                  if (dragMoved.current) {
+                    dragMoved.current = false;
+                    return;
+                  }
+                  setFocusedIndex(index);
+                }}
+                aria-pressed={isFocused}
+                title={isFocused ? undefined : "Bring this answer to the front"}
+              >
+                <p style={answerTextStyle(distance, isFocused)}>{step.answer}</p>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <button
         type="button"

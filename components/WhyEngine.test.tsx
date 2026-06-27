@@ -66,6 +66,36 @@ describe("WhyEngine", () => {
     expect(latest.getAttribute("aria-pressed")).toBe("false");
   });
 
+  it("spins the rolodex to an earlier card on a vertical drag", async () => {
+    const fetchMock = fetch as ReturnType<typeof vi.fn>;
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ question: "q1", answer: "First." }))
+      .mockResolvedValueOnce(jsonResponse({ question: "q2", answer: "Second." }))
+      .mockResolvedValueOnce(jsonResponse({ question: "q3", answer: "Third." }));
+
+    render(<WhyEngine topic="Stop sign" />);
+    for (let k = 0; k < 3; k++) {
+      fireEvent.click(screen.getByRole("button", { name: /^but why\??$/i }));
+      // eslint-disable-next-line no-await-in-loop
+      await screen.findByText(["First.", "Second.", "Third."][k]);
+    }
+
+    const firstCard = screen.getByText("First.").closest("button")!;
+    const thirdCard = screen.getByText("Third.").closest("button")!;
+    const stack = firstCard.parentElement!;
+
+    // Newest is in front to start.
+    expect(thirdCard.getAttribute("aria-pressed")).toBe("true");
+
+    // Drag downward over the stack — pulls the older cards forward.
+    fireEvent.pointerDown(stack, { clientY: 100, pointerId: 1 });
+    fireEvent.pointerMove(stack, { clientY: 220, pointerId: 1 });
+    fireEvent.pointerUp(stack, { clientY: 220, pointerId: 1 });
+
+    expect(firstCard.getAttribute("aria-pressed")).toBe("true");
+    expect(thirdCard.getAttribute("aria-pressed")).toBe("false");
+  });
+
   it("sends the topic and accumulated chain to /api/why", async () => {
     const fetchMock = fetch as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue(

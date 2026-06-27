@@ -107,6 +107,19 @@ describe("Home flow", () => {
     expect(screen.getByText("Try again")).toBeTruthy();
   });
 
+  it("the top back button returns to the landing page", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(result));
+
+    render(<Home />);
+    fireEvent.click(scanTab());
+
+    await screen.findByText("Stop sign");
+    fireEvent.click(screen.getByRole("button", { name: /back to start/i }));
+
+    await waitFor(() => expect(screen.getByText("daily-stub")).toBeTruthy());
+    expect(screen.queryByText("Stop sign")).toBeNull();
+  });
+
   it("the wordmark returns to idle and clears the previous result", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(jsonResponse(result));
 

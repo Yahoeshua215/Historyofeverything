@@ -51,15 +51,40 @@ const main: CSSProperties = {
   minHeight: "100dvh",
 };
 
-// Small persistent brand/home link, shown once you've left the landing.
+// Top bar shown once you've left the landing: a back affordance on the left,
+// the brand on the right.
+const topBar: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+};
+
+// Small persistent brand/home link.
 const wordmark: CSSProperties = {
-  alignSelf: "flex-start",
   background: "none",
   border: "none",
   padding: 0,
   fontSize: "1.15rem",
   fontWeight: 800,
   letterSpacing: "-0.03em",
+};
+
+// Back to the landing page from the answer/loading/error screens.
+const backButton: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  background: "var(--glass)",
+  color: "var(--text)",
+  border: "1px solid var(--glass-border)",
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
+  borderRadius: 999,
+  padding: "8px 16px",
+  fontSize: "0.9rem",
+  fontWeight: 600,
 };
 
 // Landing hero — the name front and centre with a soft one-liner.
@@ -276,14 +301,25 @@ export default function Home() {
     <>
       <main style={main}>
         {status !== "idle" && (
-          <button
-            type="button"
-            style={wordmark}
-            className="hl-gradient-text"
-            onClick={reset}
-          >
-            EverWhy
-          </button>
+          <div style={topBar}>
+            <button
+              type="button"
+              style={backButton}
+              className="hl-interactive"
+              onClick={reset}
+              aria-label="Back to start"
+            >
+              ← Back
+            </button>
+            <button
+              type="button"
+              style={wordmark}
+              className="hl-gradient-text"
+              onClick={reset}
+            >
+              EverWhy
+            </button>
+          </div>
         )}
 
         {status === "idle" && (

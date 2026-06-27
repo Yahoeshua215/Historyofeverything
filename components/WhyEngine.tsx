@@ -27,29 +27,38 @@ const stepStyle: CSSProperties = {
   scrollMarginTop: 20,
 };
 
-const aStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--text)",
-  fontSize: "clamp(1.15rem, 4.5vw, 1.45rem)",
-  lineHeight: 1.45,
-};
+// The answer in front of you (the latest) is the biggest and boldest; each
+// earlier answer behind it shrinks and fades, giving the trail a sense of
+// depth so the current step is always the clear focus.
+function answerStyle(distanceFromLatest: number): CSSProperties {
+  const scale = Math.max(0.6, 1 - distanceFromLatest * 0.14);
+  const opacity = Math.max(0.4, 1 - distanceFromLatest * 0.16);
+  return {
+    margin: 0,
+    color: "var(--text)",
+    fontSize: `calc(clamp(1.2rem, 4.8vw, 1.55rem) * ${scale})`,
+    lineHeight: 1.4,
+    opacity,
+    transition: "font-size 0.35s ease, opacity 0.35s ease",
+  };
+}
 
-// The big, can't-miss CTA — the heart of the experience.
+// The big, can't-miss CTA — the heart of the experience. Pink, on purpose.
 const button: CSSProperties = {
   width: "100%",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   gap: 10,
-  background: "var(--accent-gradient)",
-  color: "var(--accent-ink)",
+  background: "linear-gradient(135deg, #ec4899 0%, #f472b6 55%, #f9a8d4 130%)",
+  color: "#ffffff",
   border: "none",
   borderRadius: "var(--radius)",
   padding: "20px 28px",
   fontSize: "1.3rem",
   fontWeight: 700,
   letterSpacing: "-0.01em",
-  boxShadow: "var(--shadow-accent)",
+  boxShadow: "0 12px 28px rgba(236, 72, 153, 0.32)",
 };
 
 const depthStyle: CSSProperties = {
@@ -120,7 +129,7 @@ export default function WhyEngine({
           className="hl-fade-up"
           style={stepStyle}
         >
-          <p style={aStyle}>{step.answer}</p>
+          <p style={answerStyle(chain.length - 1 - index)}>{step.answer}</p>
         </div>
       ))}
 

@@ -42,18 +42,24 @@ const compactButton: CSSProperties = {
   fontSize: "1.1rem",
 };
 
-// Bottom-nav tab: transparent, text-only label (matches BottomNav).
+// Bottom-nav tab: a padded glass pill matching BottomNav's text tabs.
 const navButton: CSSProperties = {
   flex: 1,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  background: "none",
-  border: "none",
-  padding: "12px 4px",
+  background: "var(--glass)",
+  border: "1px solid var(--glass-border)",
+  borderRadius: 14,
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
+  padding: "10px 4px",
   color: "var(--text-muted)",
-  fontSize: "0.82rem",
+  fontSize: "0.72rem",
   fontWeight: 600,
+  letterSpacing: "0.01em",
+  whiteSpace: "nowrap",
 };
 
 /**
@@ -116,9 +122,9 @@ export default function Capture({
           className="hl-interactive"
           onClick={openPicker}
           disabled={processing}
-          aria-label="Scan an image"
+          aria-label="Capture an image"
         >
-          {processing ? "…" : "Scan"}
+          {processing ? "…" : "Capture"}
         </button>
       ) : (
         <button

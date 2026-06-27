@@ -14,53 +14,56 @@ const ERROR_MESSAGES: Record<IdentifyErrorKind | "network", string> = {
 const wrap: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 16,
+  gap: 12,
 };
 
-// Each answer in the trail — presented large and clear. The question itself is
-// not shown (it's redundant with the answer); it's still tracked for the API so
-// the next step can dig one layer deeper.
-const stepStyle: CSSProperties = {
-  borderLeft: "3px solid var(--accent)",
-  paddingLeft: 16,
-  // Leave breathing room when this answer is scrolled to the top of the viewport.
-  scrollMarginTop: 20,
-};
-
-// The focused answer sits in front — biggest, boldest, fully opaque. Every other
-// answer shrinks and fades with its distance from the focus, giving the trail a
-// sense of depth. Tapping any answer makes it the focus, carouseling it forward.
-const answerButton: CSSProperties = {
-  ...stepStyle,
-  paddingTop: 0,
-  paddingRight: 0,
-  paddingBottom: 0,
+// Each answer sits on its own frosted-glass card. The focused card is in front —
+// largest, brightest, fully opaque, with the strongest shadow; every card behind
+// it recedes (smaller, fainter, flatter) by its distance from the focus, like a
+// row of dominoes falling away. A per-card transition delay keyed to that
+// distance makes the trail re-settle in a cascading domino ripple when the focus
+// moves (a new answer arrives, or you tap an earlier one).
+const cardBase: CSSProperties = {
   display: "block",
   width: "100%",
   textAlign: "left",
-  background: "none",
-  border: "none",
-  borderLeft: "3px solid var(--accent)",
+  borderRadius: "var(--radius-lg)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
   color: "var(--text)",
   cursor: "pointer",
-  transition: "opacity 0.35s ease",
+  // Leave breathing room when this card is scrolled to the top of the viewport.
+  scrollMarginTop: 20,
 };
 
-function answerContainerStyle(distanceFromFocus: number): CSSProperties {
+// Clamp depth so a long trail doesn't fade or shrink into nothing.
+const MAX_DEPTH = 4;
+
+function answerCardStyle(distanceFromFocus: number, focused: boolean): CSSProperties {
+  const t = Math.min(distanceFromFocus, MAX_DEPTH);
   return {
-    ...answerButton,
-    opacity: Math.max(0.4, 1 - distanceFromFocus * 0.16),
+    ...cardBase,
+    background: focused ? "var(--glass-strong)" : "var(--glass)",
+    border: focused ? "1px solid var(--accent)" : "1px solid var(--glass-border)",
+    boxShadow: focused ? "var(--shadow)" : "var(--shadow-soft)",
+    opacity: Math.max(0.5, 1 - t * 0.13),
+    padding: `${Math.max(12, 22 - t * 2)}px ${Math.max(16, 24 - t * 2)}px`,
+    transition:
+      "opacity 0.4s cubic-bezier(0.22,1,0.36,1), padding 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, background 0.4s ease, border-color 0.4s ease",
+    transitionDelay: `${t * 55}ms`,
   };
 }
 
 function answerTextStyle(distanceFromFocus: number, focused: boolean): CSSProperties {
-  const scale = Math.max(0.6, 1 - distanceFromFocus * 0.14);
+  const t = Math.min(distanceFromFocus, MAX_DEPTH);
+  const scale = Math.max(0.62, 1 - t * 0.13);
   return {
     margin: 0,
-    fontSize: `calc(clamp(1.2rem, 4.8vw, 1.55rem) * ${scale})`,
+    fontSize: `calc(clamp(1.15rem, 4.6vw, 1.5rem) * ${scale})`,
     lineHeight: 1.4,
-    fontWeight: focused ? 600 : 400,
-    transition: "font-size 0.35s ease",
+    fontWeight: focused ? 600 : 500,
+    transition: "font-size 0.4s cubic-bezier(0.22,1,0.36,1)",
+    transitionDelay: `${t * 55}ms`,
   };
 }
 
@@ -161,7 +164,7 @@ export default function WhyEngine({
               itemRefs.current[index] = el;
             }}
             className={index === chain.length - 1 ? "hl-fade-up" : undefined}
-            style={answerContainerStyle(distance)}
+            style={answerCardStyle(distance, isFocused)}
             onClick={() => setFocusedIndex(index)}
             aria-pressed={isFocused}
             title={isFocused ? undefined : "Bring this answer to the front"}

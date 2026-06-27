@@ -13,10 +13,10 @@ const bar: CSSProperties = {
   zIndex: 40,
   display: "flex",
   alignItems: "stretch",
-  gap: 2,
+  gap: 6,
   maxWidth: 660,
   margin: "0 auto",
-  padding: "8px 8px calc(8px + env(safe-area-inset-bottom))",
+  padding: "10px 10px calc(10px + env(safe-area-inset-bottom))",
   background: "var(--glass-strong)",
   borderTop: "1px solid var(--glass-border)",
   backdropFilter: "var(--glass-blur)",
@@ -24,22 +24,37 @@ const bar: CSSProperties = {
   boxShadow: "0 -10px 30px rgba(30, 41, 80, 0.10)",
 };
 
+// Each tab is its own padded glass pill — a soft amorphic border around the
+// label so the bar reads as a row of buttons rather than flat text.
 const item: CSSProperties = {
   flex: 1,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  background: "none",
-  border: "none",
-  padding: "12px 4px",
+  background: "var(--glass)",
+  border: "1px solid var(--glass-border)",
+  borderRadius: 14,
+  boxShadow: "var(--shadow-soft)",
+  backdropFilter: "var(--glass-blur)",
+  WebkitBackdropFilter: "var(--glass-blur)",
+  padding: "10px 4px",
   color: "var(--text-muted)",
-  fontSize: "0.82rem",
+  fontSize: "0.72rem",
   fontWeight: 600,
   letterSpacing: "0.01em",
+  whiteSpace: "nowrap",
+  transition: "background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease",
 };
 
-const itemActive: CSSProperties = { ...item, color: "var(--accent-strong)", fontWeight: 700 };
-const itemDisabled: CSSProperties = { ...item, opacity: 0.38 };
+const itemActive: CSSProperties = {
+  ...item,
+  background: "var(--accent-gradient)",
+  color: "var(--accent-ink)",
+  border: "1px solid transparent",
+  boxShadow: "var(--shadow-accent)",
+  fontWeight: 700,
+};
+const itemDisabled: CSSProperties = { ...item, opacity: 0.4, boxShadow: "none" };
 
 function NavButton({
   label,

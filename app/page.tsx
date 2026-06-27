@@ -282,14 +282,14 @@ export default function Home() {
             className="hl-gradient-text"
             onClick={reset}
           >
-            Everywhy
+            EverWhy
           </button>
         )}
 
         {status === "idle" && (
           <div style={stage}>
             <section style={hero}>
-              <h1 style={heroTitle} className="hl-gradient-text">Everywhy</h1>
+              <h1 style={heroTitle} className="hl-gradient-text">EverWhy</h1>
               <p style={heroDesc}>Capture the Why behind everything.</p>
               <p style={heroHint}>Search or scan below to begin — or tap a card.</p>
             </section>

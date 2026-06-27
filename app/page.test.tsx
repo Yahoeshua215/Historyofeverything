@@ -81,7 +81,7 @@ describe("Home flow", () => {
     expect(await screen.findByText("Stop sign")).toBeTruthy();
     expect(screen.getByText("An octagonal red sign requiring drivers to stop.")).toBeTruthy();
     // Reset is now the persistent wordmark.
-    expect(screen.getByRole("button", { name: "Everywhy" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "EverWhy" })).toBeTruthy();
   });
 
   it("shows a friendly message (not a crash) on a refusal (R5)", async () => {
@@ -114,7 +114,7 @@ describe("Home flow", () => {
     fireEvent.click(scanTab());
 
     await screen.findByText("Stop sign");
-    fireEvent.click(screen.getByRole("button", { name: "Everywhy" }));
+    fireEvent.click(screen.getByRole("button", { name: "EverWhy" }));
 
     // Back on the landing: the daily suggestions are shown and the result is gone.
     await waitFor(() => expect(screen.getByText("daily-stub")).toBeTruthy());
@@ -144,7 +144,7 @@ describe("Home flow", () => {
 
     // The history tab shows the count; reset away from the result, then open it.
     expect(await screen.findByRole("button", { name: /history \(1\)/i })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Everywhy" }));
+    fireEvent.click(screen.getByRole("button", { name: "EverWhy" }));
     fireEvent.click(await screen.findByRole("button", { name: /history \(1\)/i }));
 
     // The saved record is listed in the sheet; selecting it re-opens the story.

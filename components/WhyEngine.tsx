@@ -15,14 +15,18 @@ const wrap: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 12,
+  // A shared 3D scene so the cards can stand up and tilt back into the distance.
+  perspective: "1100px",
+  perspectiveOrigin: "50% 35%",
 };
 
-// Each answer sits on its own frosted-glass card. The focused card is in front —
-// largest, brightest, fully opaque, with the strongest shadow; every card behind
-// it recedes (smaller, fainter, flatter) by its distance from the focus, like a
-// row of dominoes falling away. A per-card transition delay keyed to that
-// distance makes the trail re-settle in a cascading domino ripple when the focus
-// moves (a new answer arrives, or you tap an earlier one).
+// Each answer sits on its own frosted-glass card that stands upright in a 3D
+// scene. The focused card faces you flat and in front; every card behind it
+// tilts back on its bottom edge and pushes away in Z — a row of standing
+// dominoes receding into the distance — also shrinking and fading by depth. A
+// per-card transition delay keyed to that depth makes the whole row re-settle in
+// a cascading domino ripple when the focus moves (a new answer arrives, or you
+// tap an earlier one).
 const cardBase: CSSProperties = {
   display: "block",
   width: "100%",
@@ -32,38 +36,49 @@ const cardBase: CSSProperties = {
   WebkitBackdropFilter: "var(--glass-blur)",
   color: "var(--text)",
   cursor: "pointer",
+  // Stand the card on its bottom edge so it tilts back like a domino.
+  transformOrigin: "center bottom",
+  willChange: "transform",
   // Leave breathing room when this card is scrolled to the top of the viewport.
   scrollMarginTop: 20,
 };
 
-// Clamp depth so a long trail doesn't fade or shrink into nothing.
+// Clamp depth so a long trail doesn't fade or tilt into nothing.
 const MAX_DEPTH = 4;
 
 function answerCardStyle(distanceFromFocus: number, focused: boolean): CSSProperties {
   const t = Math.min(distanceFromFocus, MAX_DEPTH);
+  // Stand the focused card flat in front; lean each one behind it further back.
+  const transform = focused
+    ? "rotateX(0deg) translateZ(0px)"
+    : `rotateX(${t * 9}deg) translateZ(${-t * 26}px)`;
   return {
     ...cardBase,
+    transform,
     background: focused ? "var(--glass-strong)" : "var(--glass)",
     border: focused ? "1px solid var(--accent)" : "1px solid var(--glass-border)",
-    boxShadow: focused ? "var(--shadow)" : "var(--shadow-soft)",
-    opacity: Math.max(0.5, 1 - t * 0.13),
-    padding: `${Math.max(12, 22 - t * 2)}px ${Math.max(16, 24 - t * 2)}px`,
+    boxShadow: focused
+      ? "0 18px 40px rgba(30, 41, 80, 0.20)"
+      : "0 10px 22px rgba(30, 41, 80, 0.12)",
+    opacity: Math.max(0.45, 1 - t * 0.14),
+    padding: `${Math.max(14, 22 - t * 1.5)}px ${Math.max(16, 24 - t * 1.5)}px`,
     transition:
-      "opacity 0.4s cubic-bezier(0.22,1,0.36,1), padding 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease, background 0.4s ease, border-color 0.4s ease",
-    transitionDelay: `${t * 55}ms`,
+      "transform 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.45s cubic-bezier(0.22,1,0.36,1), padding 0.45s ease, box-shadow 0.45s ease, background 0.45s ease, border-color 0.45s ease",
+    transitionDelay: `${t * 60}ms`,
   };
 }
 
 function answerTextStyle(distanceFromFocus: number, focused: boolean): CSSProperties {
   const t = Math.min(distanceFromFocus, MAX_DEPTH);
-  const scale = Math.max(0.62, 1 - t * 0.13);
+  // Gentle text shrink — the 3D recession does most of the size work now.
+  const scale = Math.max(0.78, 1 - t * 0.06);
   return {
     margin: 0,
     fontSize: `calc(clamp(1.15rem, 4.6vw, 1.5rem) * ${scale})`,
     lineHeight: 1.4,
     fontWeight: focused ? 600 : 500,
-    transition: "font-size 0.4s cubic-bezier(0.22,1,0.36,1)",
-    transitionDelay: `${t * 55}ms`,
+    transition: "font-size 0.45s cubic-bezier(0.22,1,0.36,1)",
+    transitionDelay: `${t * 60}ms`,
   };
 }
 

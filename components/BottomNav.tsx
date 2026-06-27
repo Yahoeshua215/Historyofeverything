@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import Capture from "@/components/Capture";
 import type { CapturedImage } from "@/lib/image";
 import type { Mode } from "@/lib/types";
@@ -27,30 +27,26 @@ const bar: CSSProperties = {
 const item: CSSProperties = {
   flex: 1,
   display: "flex",
-  flexDirection: "column",
   alignItems: "center",
-  gap: 3,
+  justifyContent: "center",
   background: "none",
   border: "none",
-  padding: "6px 4px",
+  padding: "12px 4px",
   color: "var(--text-muted)",
-  fontSize: "0.62rem",
+  fontSize: "0.82rem",
   fontWeight: 600,
   letterSpacing: "0.01em",
 };
 
-const itemActive: CSSProperties = { ...item, color: "var(--accent-strong)" };
+const itemActive: CSSProperties = { ...item, color: "var(--accent-strong)", fontWeight: 700 };
 const itemDisabled: CSSProperties = { ...item, opacity: 0.38 };
-const iconStyle: CSSProperties = { fontSize: "1.35rem", lineHeight: 1 };
 
 function NavButton({
-  icon,
   label,
   onClick,
   active = false,
   disabled = false,
 }: {
-  icon: ReactNode;
   label: string;
   onClick: () => void;
   active?: boolean;
@@ -65,18 +61,16 @@ function NavButton({
       disabled={disabled}
       aria-pressed={active}
     >
-      <span aria-hidden style={iconStyle}>
-        {icon}
-      </span>
-      <span>{label}</span>
+      {label}
     </button>
   );
 }
 
 /**
- * The app's primary navigation — a fixed, mobile-style icon bar. Every menu
- * action (search, scan, lenses, history, reading level) lives here as a single
- * icon so the screen above stays devoted to the answers and the "But why?" CTA.
+ * The app's primary navigation — a fixed, mobile-style bottom bar. Every menu
+ * action (search, scan, lenses, history, reading level) lives here as a plain
+ * text tab so the screen above stays devoted to the answers and the "But why?"
+ * CTA.
  */
 export default function BottomNav({
   onSearch,
@@ -106,28 +100,24 @@ export default function BottomNav({
   return (
     <nav style={bar} aria-label="Main menu">
       <NavButton
-        icon="🔍"
         label="Search"
         onClick={onSearch}
         active={openSheet === "search"}
       />
       <Capture nav onCapture={onCapture} onError={onCaptureError} />
       <NavButton
-        icon="🔭"
         label="Lens"
         onClick={onLenses}
         active={openSheet === "lens" || lensActive}
         disabled={!lensesEnabled}
       />
       <NavButton
-        icon="🕘"
         label={historyCount > 0 ? `History (${historyCount})` : "History"}
         onClick={onHistory}
         active={openSheet === "history"}
         disabled={historyCount === 0}
       />
       <NavButton
-        icon={mode === "kid" ? "🧒" : "🎓"}
         label={mode === "kid" ? "Kid" : "Adult"}
         onClick={onToggleMode}
       />

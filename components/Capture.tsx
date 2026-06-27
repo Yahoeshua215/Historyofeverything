@@ -42,18 +42,17 @@ const compactButton: CSSProperties = {
   fontSize: "1.1rem",
 };
 
-// Bottom-nav tab: transparent, icon stacked over a tiny label (matches BottomNav).
+// Bottom-nav tab: transparent, text-only label (matches BottomNav).
 const navButton: CSSProperties = {
   flex: 1,
   display: "flex",
-  flexDirection: "column",
   alignItems: "center",
-  gap: 3,
+  justifyContent: "center",
   background: "none",
   border: "none",
-  padding: "6px 4px",
+  padding: "12px 4px",
   color: "var(--text-muted)",
-  fontSize: "0.62rem",
+  fontSize: "0.82rem",
   fontWeight: 600,
 };
 
@@ -119,10 +118,7 @@ export default function Capture({
           disabled={processing}
           aria-label="Scan an image"
         >
-          <span aria-hidden style={{ fontSize: "1.35rem", lineHeight: 1 }}>
-            {processing ? "…" : "📷"}
-          </span>
-          <span>Scan</span>
+          {processing ? "…" : "Scan"}
         </button>
       ) : (
         <button

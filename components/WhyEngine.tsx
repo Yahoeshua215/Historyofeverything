@@ -132,7 +132,7 @@ const button: CSSProperties = {
   justifyContent: "center",
   gap: 10,
   marginTop: 20,
-  background: "linear-gradient(135deg, #ec4899 0%, #f472b6 55%, #f9a8d4 130%)",
+  background: "#ec4899",
   color: "#ffffff",
   border: "none",
   borderRadius: "var(--radius)",

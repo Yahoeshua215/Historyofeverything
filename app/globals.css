@@ -1,6 +1,5 @@
 :root {
-  /* Bright, airy base. The page background is a soft pastel gradient (see body)
-     rather than a flat color — glass surfaces float above it. */
+  /* Flat, calm base colour — glass surfaces float above it. */
   --bg: #eef2fb;
   --text: #1a1f2e;
   --text-muted: #5a6478;
@@ -18,13 +17,14 @@
   --surface-2: var(--glass-2);
   --border: rgba(17, 24, 39, 0.07);
 
-  /* Vivid but soft accent — indigo with a cyan companion for gradients/pop. */
+  /* Single flat accent — no gradient, kept simple. */
   --accent: #6366f1;
   --accent-2: #22d3ee;
   --accent-strong: #4f46e5;
   --accent-ink: #ffffff;
   --accent-soft: rgba(99, 102, 241, 0.12);
-  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #818cf8 55%, #22d3ee 130%);
+  /* Kept for back-compat with components that use it as a background; now flat. */
+  --accent-gradient: var(--accent);
 
   --danger: #e0506a;
 
@@ -56,14 +56,8 @@ body {
   text-rendering: optimizeLegibility;
   letter-spacing: -0.011em;
 
-  /* Bright, airy ambient: soft floating color washes over a pale base. Fixed so
-     it stays put while content scrolls — feels like glass over a lit surface. */
-  background:
-    radial-gradient(1100px 620px at 8% -8%, rgba(99, 102, 241, 0.20), transparent 60%),
-    radial-gradient(1000px 680px at 112% 6%, rgba(34, 211, 238, 0.18), transparent 55%),
-    radial-gradient(900px 700px at 50% 118%, rgba(244, 114, 182, 0.14), transparent 55%),
-    linear-gradient(180deg, #f8faff 0%, #eef2fb 55%, #e9eefb 100%);
-  background-attachment: fixed;
+  /* Flat, simple base — one calm colour, no washes or gradients. */
+  background: var(--bg);
 }
 
 button {
@@ -105,7 +99,7 @@ button:disabled {
 }
 
 /* Interactive surfaces (cards/chips/buttons) — lift on hover. Background is left
-   untouched so gradient buttons keep their gradient. */
+   untouched so each surface keeps its own fill. */
 .hl-interactive {
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
@@ -131,12 +125,9 @@ button:disabled {
   display: none;
 }
 
-/* Gradient text for hero titles. */
+/* Accent-coloured text for hero titles — flat, no gradient. */
 .hl-gradient-text {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--accent);
 }
 
 /* ── Entrance animations (delight; core to the feel) ────────────────────── */

@@ -156,7 +156,8 @@ export const WHY_STEP_SCHEMA = {
     },
     answer: {
       type: "string",
-      description: "A concise, accurate answer to that question — one or two sentences.",
+      description:
+        "One short, accurate sentence answering that question, starting with 'Because'.",
     },
   },
   required: ["question", "answer"],

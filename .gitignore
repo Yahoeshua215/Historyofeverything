@@ -29,3 +29,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# ios (xcodegen regenerates the project; build artifacts are local)
+/ios/build/
+/ios/Everywhy.xcodeproj/
